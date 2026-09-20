@@ -1,0 +1,512 @@
+{
+  "manifest_version": 1,
+  "package": {
+    "name": "travel-handbook-builder-skill",
+    "version": "0.1.0"
+  },
+  "source": {
+    "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
+    "release_tag": "v0.1.0",
+    "distribution": "public-skill-release"
+  },
+  "requirements": {
+    "environment": ".venv",
+    "file": "requirements.txt",
+    "launcher_platform": "POSIX",
+    "module_search": "bundle-runtime-only",
+    "python": ">=3.12",
+    "runtime_bytecode": "disabled",
+    "timezone_fallback": "tzdata"
+  },
+  "integrity": {
+    "algorithm": "sha256",
+    "file_count": 76,
+    "scope": "all skill files except MANIFEST.json and generated .venv"
+  },
+  "entrypoints": {
+    "cli": {
+      "command": [
+        "scripts/travel-handbook"
+      ],
+      "path": "scripts/travel-handbook"
+    },
+    "python": {
+      "command": [
+        "scripts/python"
+      ],
+      "path": "scripts/python"
+    },
+    "setup": {
+      "command": [
+        "python3",
+        "scripts/setup_runtime.py"
+      ],
+      "path": "scripts/setup_runtime.py"
+    },
+    "verify": {
+      "command": [
+        "python3",
+        "scripts/verify_bundle.py"
+      ],
+      "path": "scripts/verify_bundle.py"
+    }
+  },
+  "files": [
+    {
+      "path": "LICENSE",
+      "size": 1063,
+      "sha256": "1d6073f75727ac3f8da594fbe765d4cc8586d37c60e815065692c3a8192f08ec",
+      "mode": "0644"
+    },
+    {
+      "path": "README.md",
+      "size": 5574,
+      "sha256": "e1236d8e917670458be2c7cf6ab0332308fb3f0bac8e263b83491b7293bacb8b",
+      "mode": "0644"
+    },
+    {
+      "path": "SKILL.md",
+      "size": 11135,
+      "sha256": "2f3f4c2e48506163d8d5149a027aef61247a4692bc243696a67a020feaf41ec5",
+      "mode": "0644"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "size": 4302,
+      "sha256": "2a834675ce29a267be14de72152053366ebf7f3bcfd4e563498b889ea41746c1",
+      "mode": "0644"
+    },
+    {
+      "path": "references/ACCESS_POINT_GUIDE.md",
+      "size": 4477,
+      "sha256": "87a5975c919511bfe22ce0b42bbac94379ef38600f17693fc2d067b3184b4bd9",
+      "mode": "0644"
+    },
+    {
+      "path": "references/ARRANGEMENT_EDIT_GUIDE.md",
+      "size": 11366,
+      "sha256": "aa1b31e020a88b240b9d7dee76f79d0765c8dc0437e470d4456a2c9c5a2c2f08",
+      "mode": "0644"
+    },
+    {
+      "path": "references/CALLER_GUIDE.md",
+      "size": 23274,
+      "sha256": "32a352f8843612b89557b01d5be3325eb88d4dcd1c6dad89fb250a558945bdb7",
+      "mode": "0644"
+    },
+    {
+      "path": "references/COVERAGE_REVISION_GUIDE.md",
+      "size": 4543,
+      "sha256": "b4b38faf476d01be5528696397f9c1d7df008bf70414767344fee473fea8eb82",
+      "mode": "0644"
+    },
+    {
+      "path": "references/GUIDE_NOTE_GUIDE.md",
+      "size": 5724,
+      "sha256": "e113c8d2cee6f400be2e1ae7879afb98eb99c4dda8a6c8d6520045ec0135b6d3",
+      "mode": "0644"
+    },
+    {
+      "path": "references/HOURS_IMPACT_GUIDE.md",
+      "size": 5185,
+      "sha256": "76c866960c39d456303e04366f21eb0c6e689608f822f954d2d417e5e3414be8",
+      "mode": "0644"
+    },
+    {
+      "path": "references/ISSUE_GUIDE.md",
+      "size": 2877,
+      "sha256": "6b33288d63c68d4e67d637688e3d39cc96e3b42dab7770640a4c3ae595f89e12",
+      "mode": "0644"
+    },
+    {
+      "path": "references/LOCATION_GUIDE.md",
+      "size": 9335,
+      "sha256": "8d43a7ce677912c3c59d27fc98e8cfd4250073fadebdad2b72489610bdd1b007",
+      "mode": "0644"
+    },
+    {
+      "path": "references/MONEY_GUIDE.md",
+      "size": 7630,
+      "sha256": "1bb3d33c62b81a32a12b3395020cfc8b0164bb3ffd28ed4f63d13004bcdfaf5d",
+      "mode": "0644"
+    },
+    {
+      "path": "references/MOVEMENT_GUIDE.md",
+      "size": 18879,
+      "sha256": "2d6d5becc761c2aab70209146d4652f365ac937e2cb4f4f345a248b800f0ce7e",
+      "mode": "0644"
+    },
+    {
+      "path": "references/PARTY_GUIDE.md",
+      "size": 6368,
+      "sha256": "c2ba2258b83dd51315e10a7cf24c1852bb5078a53f6ac1007edae0212049647f",
+      "mode": "0644"
+    },
+    {
+      "path": "references/README.md",
+      "size": 18977,
+      "sha256": "9953fb348463f0394c19a8a1af973f25c477def4940033b5ca89c592b187ce2f",
+      "mode": "0644"
+    },
+    {
+      "path": "references/RECOMMENDATION_GUIDE.md",
+      "size": 4138,
+      "sha256": "5b4212e19656318a26635ae97a4edf16e671d66f85a188f75a9c2a3f894a1277",
+      "mode": "0644"
+    },
+    {
+      "path": "references/RECOMMENDATION_ROUTE_DECISION_GUIDE.md",
+      "size": 11509,
+      "sha256": "6c3d18fec352fd8d1b75a965e3a3ccadc166994f4c0d5bd63d81af9d7d38714c",
+      "mode": "0644"
+    },
+    {
+      "path": "references/RECOVERY_READ_PREVIEW_GUIDE.md",
+      "size": 7665,
+      "sha256": "ca5b6e15753f0c3d6908e4b90ba6bcc3587d7669a19791d01375748da59677d8",
+      "mode": "0644"
+    },
+    {
+      "path": "references/RESERVATION_GUIDE.md",
+      "size": 9374,
+      "sha256": "ac60032df33796588dd447ca756d367133764cc33b462fe7e320428aab6a1a31",
+      "mode": "0644"
+    },
+    {
+      "path": "references/SHOPPING_PLACE_GUIDE.md",
+      "size": 4443,
+      "sha256": "4cd9944ba79814e2ad6d73ccaabcc3f86a88805d63455cbfc8f2cef49fa0ba61",
+      "mode": "0644"
+    },
+    {
+      "path": "references/SOURCE_ADOPTION_GUIDE.md",
+      "size": 6821,
+      "sha256": "68d7c268eb20e81835930e03a9c1f985fb03ccc3b74db0ab26824be477153dfc",
+      "mode": "0644"
+    },
+    {
+      "path": "references/SOURCE_GUIDE.md",
+      "size": 7516,
+      "sha256": "084718cd5ce86efbf642c312fa380cf7218aac66902f5d5dfc9702a233bbbfda",
+      "mode": "0644"
+    },
+    {
+      "path": "references/STAY_GUIDE.md",
+      "size": 6176,
+      "sha256": "c3ac0eb769827ba82237bdc7e3469786610708cb32ca07d758ab49226fbbd043",
+      "mode": "0644"
+    },
+    {
+      "path": "references/TASK_PREPARATION_GUIDE.md",
+      "size": 5593,
+      "sha256": "a7b30abfcfb89d8c5e27fe2bd697f24673e291498505f6b708df298e3f1897d3",
+      "mode": "0644"
+    },
+    {
+      "path": "references/TIME_PLAN_GUIDE.md",
+      "size": 6102,
+      "sha256": "c36ab654389f6ea677a535e7915d3e1ffffdd6cfcd6999a56fac97fdd70f0776",
+      "mode": "0644"
+    },
+    {
+      "path": "references/TRANSPORT_COVERAGE_GUIDE.md",
+      "size": 5939,
+      "sha256": "edc6b85bc96de7b706530f20361b9ac4046c2c6cb241a13dfb45e71dba12ed8f",
+      "mode": "0644"
+    },
+    {
+      "path": "references/TRANSPORT_SERVICE_GUIDE.md",
+      "size": 10548,
+      "sha256": "4b363def3e8f7b57952631b6f950d3613eab1490b7e54eb152903c1552f8dde6",
+      "mode": "0644"
+    },
+    {
+      "path": "references/UNASSIGNED_ITEM_GUIDE.md",
+      "size": 2820,
+      "sha256": "f32ea0da05be5f36d927c5926402c34fdb4989de429fdd96b3227f02421b8d68",
+      "mode": "0644"
+    },
+    {
+      "path": "requirements.txt",
+      "size": 42,
+      "sha256": "0edb5ad0329400af77cd5852bae661b7db9c369bb5b37c0b74f95ca15c738313",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/__init__.py",
+      "size": 366,
+      "sha256": "8754d43ef813583e9a3b5ce18b41e8ce4d4fd39df75d7b7885cd4f2a1d344bba",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/__main__.py",
+      "size": 5855,
+      "sha256": "c83d2083e86a4d634f9e6c5a1bf6eb374f77737d2c6e7d200f2e183134d32eb8",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/arrangements.py",
+      "size": 17453,
+      "sha256": "69cb940a47e4390d5d2b727f1b950ac33cb1449f713fff5ad1b2f226a16922a6",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/availability.py",
+      "size": 5894,
+      "sha256": "679bd155a4774a593db515699819c8dcf95a4d7b9d7d16def076834fd42a8dc2",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/coordinates.py",
+      "size": 7111,
+      "sha256": "271924f0c5945717bcb2bfa9121ac3ead9d3da6e826cdc20fe77ad7f47bcc065",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/core.py",
+      "size": 90486,
+      "sha256": "17383574bed63e456c3d53d7b908b82a045a36192074b96226105d786225cf1c",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/coverage_revisions.py",
+      "size": 6797,
+      "sha256": "eea3c1dc437222753a4d2ca19c6098a03be34b92fe2b6c37c0047d45352006da",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/duration_evidence.py",
+      "size": 2383,
+      "sha256": "f61e0ab7090c390bdae153f764ad4073124d01f71fd70eb832041efc616a94ae",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/errors.py",
+      "size": 601,
+      "sha256": "2b689432e95064a9e633dfacbe47f36020b32782ad4f010c87fc5c5b6362dd9c",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/execution_replacements.py",
+      "size": 10039,
+      "sha256": "34caf50ab7f8d296972a9191e957a30a3e1180b43b043ae9f984d14bbd465f95",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/guide_notes.py",
+      "size": 5050,
+      "sha256": "d618881a58e966526f4ad9eab1613822ebcdd75db1ea28cd1dcf90001256f52b",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/issues.py",
+      "size": 3467,
+      "sha256": "115b1b00a34d252a2696e3250f2f88591d985082c266c7a2de6aab996c48ad0b",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/item_places.py",
+      "size": 4325,
+      "sha256": "04e2b645476ece1cbbab60966fa55dc72763bf72ba25981040f6be4ce4f5e35f",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/item_times.py",
+      "size": 16697,
+      "sha256": "13673a5e27e21e5f2b0110c72bf1e0513819059a8b183071fb0ea819d0ec36ab",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/journeys.py",
+      "size": 33380,
+      "sha256": "ff2843a8403b47dde74b3292c474864e6710d4efcf6d298bdf60235fe89c3793",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/money.py",
+      "size": 27450,
+      "sha256": "c6281eec011567407eea4cbc11e50bfa37aa7465c535e91bba8749727c3e58dc",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/movement.py",
+      "size": 3699,
+      "sha256": "4d94331a3bcaa27e5cf4105c89f97e92ec32dbe0866e273da816a8c4aeb687b6",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/participant_protection.py",
+      "size": 14570,
+      "sha256": "b161cc7f03fb6bdd200e4ca69cb412605757924bb28f52462f13523c48f35f1f",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/party.py",
+      "size": 11048,
+      "sha256": "66ddd84dbcafca6658c2a0c6693a637e21ce5fe0f6da2fa52e28d27cae70fe32",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/recommendations.py",
+      "size": 4975,
+      "sha256": "f64f46ac5a546080d539a3e966b96c8022e113d81bb1719b6c436aa805e0eb3f",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/reservations.py",
+      "size": 8227,
+      "sha256": "4733f1d94cd69f4e0d8f206a82bb3d548c614ce1d80dc637966ba800296b0f85",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/routes.py",
+      "size": 34277,
+      "sha256": "f50cfa52e5f40181f3b9cec93b11a2aff6197f6e4777aa009fe625c53cd50e55",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/source_fields.py",
+      "size": 21024,
+      "sha256": "fb7bffa8ef955fd1888cc0690017bfc31df49bef8fe4c35386d72b18a67f505d",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/source_refresh.py",
+      "size": 12689,
+      "sha256": "7eb5268767a7a8fed3b9661b15364e9886ea47b1832acd55e99ee6588b4d0395",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/source_topology.py",
+      "size": 34145,
+      "sha256": "3bd8ea09c179602d7e3acd0cc4f30de699105f6dca8e247c11bcf1fbefe796f5",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/stays.py",
+      "size": 7751,
+      "sha256": "5ff3bb3156262622d4c9d8278f2466a655e15788db3d5558d0d0ca43824e6177",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/tasks.py",
+      "size": 7440,
+      "sha256": "85e0a1c2313530adec8de55b20858b501faaa39cdcd80eba5b60f3bc375c1c4e",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/time_plans.py",
+      "size": 4207,
+      "sha256": "eff0637bae8d0d2aaf84c7cf38df41546f5cce4c8c12a66dd8fd7e5f537cc769",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/transport_services.py",
+      "size": 9811,
+      "sha256": "2adab7778a5dc25719bfcfd3f7a68f3f2a6949d7784f1c3437b62b561f2dc7d5",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/authoring/vehicles.py",
+      "size": 3769,
+      "sha256": "4f395df4cb8080cf40779bf8f655d09189d74c3f4c7f9e49e4c188a5d3bfca9b",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/schemas/v1/common.schema.json",
+      "size": 32107,
+      "sha256": "66b42ee7747654a4aee316a1ae2d302db887ddc063e12476b4934c4ce412795d",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/schemas/v1/entities.schema.json",
+      "size": 62394,
+      "sha256": "b96347bb715c6f8e0b3e77b198fc4d1361a6ca28c48c58846b04d2b72697ba38",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/schemas/v1/records.schema.json",
+      "size": 51224,
+      "sha256": "7568316c187a3806816f0c304fffae16c5f0cd8433f9f4aa01652950cf157bd0",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/schemas/v1/trip.schema.json",
+      "size": 18157,
+      "sha256": "da9d8109ecff1983cc4e6e2bd6aa8b73a5832fdff6cb3df91f6303b21f3bdc25",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/__init__.py",
+      "size": 71,
+      "sha256": "24d24ffd06a433546015c2716a7492e9df947546ce5a6bee93927a339a4c65e3",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/coverage_checks.py",
+      "size": 5192,
+      "sha256": "626404ae4757dd55dcfa4cd85eea855aee75d9689514d98d1f6f34b5ab049387",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/domain_checks.py",
+      "size": 9950,
+      "sha256": "6c8f8d234f731ff08ea7eb8c86e06e80509376a009c03f026e6e943ff1adbbf8",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/model_checks.py",
+      "size": 18237,
+      "sha256": "c874edbd8591cca49df36dd27229b4c1c8567656ecc258764ae535484a986f8b",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/time_checks.py",
+      "size": 21688,
+      "sha256": "ad69db6eab401e9e468cfb72f0a96a9cb257dd760c6745825df41f7bd9deb034",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/time_constraints.py",
+      "size": 5209,
+      "sha256": "df090d9713ad74bb26f901e0f04cb8a1bab2c7edf1b3a30150d854e1e1112ff9",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/transport_checks.py",
+      "size": 7794,
+      "sha256": "1a5afbed5e50e5ff3559ebd3e3acd1e7dc28bef0b5b6941ea11efcef650e1cf3",
+      "mode": "0644"
+    },
+    {
+      "path": "runtime/scripts/validate_trip.py",
+      "size": 6761,
+      "sha256": "c7fc9154e108e636cdcdc083b5e3ca1f0e29ef7c209033ac084c8c3e02472675",
+      "mode": "0644"
+    },
+    {
+      "path": "scripts/python",
+      "size": 584,
+      "sha256": "f2dc38678c961c96ddf92257f6b1edaa8c877be0ead348a30a4ee38982c807e9",
+      "mode": "0755"
+    },
+    {
+      "path": "scripts/setup_runtime.py",
+      "size": 2397,
+      "sha256": "e799b73117b5f9d3d9e9a249deb2da31cd58d01d94726435f9e7c254798223aa",
+      "mode": "0755"
+    },
+    {
+      "path": "scripts/travel-handbook",
+      "size": 122,
+      "sha256": "573e9b02f38f4d0c7ddd68a0107ef17ede7a4ca37950636a21c005885eb549f1",
+      "mode": "0755"
+    },
+    {
+      "path": "scripts/verify_bundle.py",
+      "size": 2714,
+      "sha256": "490ed20282c90d34df0932acfbefdcff221b458b6abdea56b435f710a6fd333b",
+      "mode": "0755"
+    }
+  ]
+}

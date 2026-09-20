@@ -1,0 +1,1422 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "Ref": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "enum": [
+            "trip",
+            "day",
+            "item",
+            "place",
+            "access_point",
+            "recommendation",
+            "route",
+            "journey",
+            "leg",
+            "transport_service",
+            "stay",
+            "activity",
+            "service_use",
+            "vehicle_use",
+            "service_bundle",
+            "task",
+            "reservation",
+            "coverage",
+            "price_quote",
+            "cost",
+            "payment",
+            "authorization_hold",
+            "exchange_rate",
+            "source",
+            "claim",
+            "issue",
+            "media",
+            "path",
+            "guide_note"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "type",
+        "id"
+      ],
+      "additionalProperties": false
+    },
+    "LocalRef": {
+      "type": "object",
+      "properties": {
+        "owner": {
+          "$ref": "#/$defs/Ref"
+        },
+        "kind": {
+          "enum": [
+            "unit",
+            "stop",
+            "segment",
+            "call",
+            "link",
+            "connection",
+            "availability_rule",
+            "scope",
+            "port_call",
+            "member",
+            "group"
+          ]
+        },
+        "id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "required": [
+        "owner",
+        "kind",
+        "id"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "member",
+                  "group"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "owner": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "trip"
+                      }
+                    },
+                    "required": [
+                      "type"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AnyRef": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Ref"
+        },
+        {
+          "$ref": "#/$defs/LocalRef"
+        }
+      ]
+    },
+    "ZonedDateTime": {
+      "type": "object",
+      "properties": {
+        "local": {
+          "type": "string",
+          "format": "local-date-time"
+        },
+        "timezone": {
+          "type": "string",
+          "format": "iana-timezone"
+        },
+        "offset": {
+          "type": "string",
+          "pattern": "^[+-](?:0\\d|1[0-4]):[0-5]\\d$"
+        }
+      },
+      "required": [
+        "local",
+        "timezone"
+      ],
+      "additionalProperties": false
+    },
+    "Duration": {
+      "type": "object",
+      "properties": {
+        "min_minutes": {
+          "type": "number",
+          "minimum": 0
+        },
+        "max_minutes": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "min_minutes",
+        "max_minutes"
+      ],
+      "additionalProperties": false
+    },
+    "CallTime": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ZonedDateTime"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "estimated"
+            },
+            "value": {
+              "$ref": "#/$defs/ZonedDateTime"
+            }
+          },
+          "required": [
+            "kind",
+            "value"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "unknown"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Participants": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "member_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Id"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "member_ids"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "group_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Id"
+              },
+              "minItems": 1,
+              "uniqueItems": true
+            }
+          },
+          "required": [
+            "group_ids"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "count"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "kind",
+            "count"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "unknown",
+                "all"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Money": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?$"
+        },
+        "currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        }
+      },
+      "required": [
+        "amount",
+        "currency"
+      ],
+      "additionalProperties": false
+    },
+    "PriceValue": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "exact"
+            },
+            "money": {
+              "$ref": "#/$defs/Money"
+            }
+          },
+          "required": [
+            "kind",
+            "money"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "range"
+            },
+            "min": {
+              "$ref": "#/$defs/Money"
+            },
+            "max": {
+              "$ref": "#/$defs/Money"
+            }
+          },
+          "required": [
+            "kind",
+            "min",
+            "max"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "from"
+            },
+            "min": {
+              "$ref": "#/$defs/Money"
+            }
+          },
+          "required": [
+            "kind",
+            "min"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "unknown"
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^[A-Z]{3}$"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TimeConstraint": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "not_before",
+                "not_after",
+                "before",
+                "after"
+              ]
+            },
+            "applies_to": {
+              "enum": [
+                "start",
+                "end"
+              ]
+            },
+            "time": {
+              "$ref": "#/$defs/ZonedDateTime"
+            }
+          },
+          "required": [
+            "kind",
+            "applies_to",
+            "time"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "enum": [
+                "not_before",
+                "not_after",
+                "before",
+                "after"
+              ]
+            },
+            "applies_to": {
+              "enum": [
+                "start",
+                "end"
+              ]
+            },
+            "relative_to": {
+              "type": "object",
+              "properties": {
+                "ref": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/Ref"
+                    },
+                    {
+                      "properties": {
+                        "type": {
+                          "enum": [
+                            "item",
+                            "activity"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                },
+                "field": {
+                  "enum": [
+                    "start",
+                    "end"
+                  ]
+                }
+              },
+              "required": [
+                "ref",
+                "field"
+              ],
+              "additionalProperties": false
+            },
+            "minutes": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "kind",
+            "applies_to",
+            "relative_to",
+            "minutes"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "TimePlan": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "sequence_only"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "unknown"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "derived"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            },
+            "from_ref": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "route",
+                        "journey",
+                        "activity"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "from_ref"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "fixed"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            },
+            "duration": {
+              "$ref": "#/$defs/Duration"
+            },
+            "duration_from_ref": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "route",
+                        "journey",
+                        "activity"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "start": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "end": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "end_from_ref": {
+              "$ref": "#/$defs/TimeBoundaryRelation"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "start"
+                  ]
+                },
+                {
+                  "required": [
+                    "end"
+                  ]
+                },
+                {
+                  "required": [
+                    "end_from_ref"
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "end_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end_from_ref",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end_from_ref",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "duration",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "duration"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "duration_from_ref"
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "required": [
+                  "start"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "estimated"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            },
+            "duration": {
+              "$ref": "#/$defs/Duration"
+            },
+            "duration_from_ref": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "route",
+                        "journey",
+                        "activity"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "start": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "end": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "end_from_ref": {
+              "$ref": "#/$defs/TimeBoundaryRelation"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "start"
+                  ]
+                },
+                {
+                  "required": [
+                    "end"
+                  ]
+                },
+                {
+                  "required": [
+                    "end_from_ref"
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "end_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end_from_ref",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end_from_ref",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "duration",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "duration"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "duration_from_ref"
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "required": [
+                  "start"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "window"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            },
+            "duration": {
+              "$ref": "#/$defs/Duration"
+            },
+            "duration_from_ref": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "route",
+                        "journey",
+                        "activity"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "start_not_before": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "start_not_after": {
+              "$ref": "#/$defs/ZonedDateTime"
+            }
+          },
+          "required": [
+            "kind",
+            "start_not_before",
+            "start_not_after"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "not": {
+                "required": [
+                  "duration",
+                  "duration_from_ref"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "boundaries"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/TimeConstraint"
+              },
+              "minItems": 0
+            },
+            "duration": {
+              "$ref": "#/$defs/Duration"
+            },
+            "duration_from_ref": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "route",
+                        "journey",
+                        "activity"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "start": {
+              "$ref": "#/$defs/CallTime"
+            },
+            "end": {
+              "$ref": "#/$defs/CallTime"
+            },
+            "end_from_ref": {
+              "$ref": "#/$defs/TimeBoundaryRelation"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "anyOf": [
+                {
+                  "required": [
+                    "start"
+                  ]
+                },
+                {
+                  "required": [
+                    "end"
+                  ]
+                },
+                {
+                  "required": [
+                    "end_from_ref"
+                  ]
+                }
+              ]
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "end_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end_from_ref",
+                  "duration"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "end_from_ref",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "not": {
+                "required": [
+                  "duration",
+                  "duration_from_ref"
+                ]
+              }
+            },
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "required": [
+                      "duration"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "duration_from_ref"
+                    ]
+                  }
+                ]
+              },
+              "then": {
+                "required": [
+                  "start"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "Period": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "local_dates"
+            },
+            "check_in": {
+              "type": "string",
+              "format": "date"
+            },
+            "check_out": {
+              "type": "string",
+              "format": "date"
+            },
+            "timezone": {
+              "type": "string",
+              "format": "iana-timezone"
+            }
+          },
+          "required": [
+            "kind",
+            "check_in",
+            "check_out",
+            "timezone"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "service_period"
+            },
+            "from_ref": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "const": "service_bundle"
+                    }
+                  }
+                }
+              ]
+            },
+            "start": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "end": {
+              "$ref": "#/$defs/ZonedDateTime"
+            }
+          },
+          "required": [
+            "kind",
+            "from_ref"
+          ],
+          "additionalProperties": false,
+          "dependentRequired": {
+            "start": [
+              "end"
+            ],
+            "end": [
+              "start"
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "fixed"
+            },
+            "start": {
+              "$ref": "#/$defs/ZonedDateTime"
+            },
+            "end": {
+              "$ref": "#/$defs/ZonedDateTime"
+            }
+          },
+          "required": [
+            "kind",
+            "start",
+            "end"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "unknown"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "date": {
+              "type": "string",
+              "format": "date"
+            },
+            "timezone": {
+              "type": "string",
+              "format": "iana-timezone"
+            }
+          },
+          "required": [
+            "date"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Link": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purposes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "platform": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "additionalProperties": false
+        },
+        "web_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "app_targets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "platform": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            },
+            "required": [
+              "platform",
+              "url"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visibility": {
+          "enum": [
+            "public",
+            "private"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "label",
+        "purposes"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "web_url"
+          ]
+        },
+        {
+          "required": [
+            "app_targets"
+          ]
+        }
+      ]
+    },
+    "Content": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "visit_advice": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "cautions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "duration_advice": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "experience": {
+                "type": "string",
+                "minLength": 1
+              },
+              "duration": {
+                "$ref": "#/$defs/Duration"
+              },
+              "conditions": {
+                "type": "string",
+                "minLength": 1
+              },
+              "notes": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "experience",
+              "duration"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Location": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "coordinate_system": {
+          "type": "string",
+          "minLength": 1
+        },
+        "precision": {
+          "enum": [
+            "entrance",
+            "building",
+            "parcel",
+            "area",
+            "approximate"
+          ]
+        },
+        "source_ref": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "source"
+                }
+              }
+            }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "lat",
+        "lon",
+        "coordinate_system",
+        "precision"
+      ],
+      "additionalProperties": false
+    },
+    "TimeBoundaryRelation": {
+      "type": "object",
+      "properties": {
+        "ref": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "item",
+                    "activity"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "field": {
+          "enum": [
+            "start",
+            "end"
+          ]
+        },
+        "offset_minutes": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "ref",
+        "field",
+        "offset_minutes"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

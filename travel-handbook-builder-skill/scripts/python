@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -P -- "$(dirname -- "$0")" && pwd)
+SKILL_DIR=$(dirname -- "$SCRIPT_DIR")
+if [ -x "$SKILL_DIR/.venv/bin/python" ]; then
+    PYTHON="$SKILL_DIR/.venv/bin/python"
+elif [ -n "${TRAVEL_HANDBOOK_PYTHON:-}" ] && [ -x "$TRAVEL_HANDBOOK_PYTHON" ]; then
+    PYTHON="$TRAVEL_HANDBOOK_PYTHON"
+else
+    printf '%s\n' "travel-handbook runtime is not prepared." >&2
+    printf '%s\n' "Run: python3 \"$SKILL_DIR/scripts/setup_runtime.py\"" >&2
+    exit 2
+fi
+
+export PYTHONPATH="$SKILL_DIR/runtime"
+export PYTHONDONTWRITEBYTECODE=1
+exec "$PYTHON" -B -P "$@"

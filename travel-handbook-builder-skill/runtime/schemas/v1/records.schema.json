@@ -1,0 +1,2075 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "enum": [
+            "pack",
+            "obtain",
+            "purchase",
+            "install",
+            "activate",
+            "verify",
+            "reserve",
+            "return",
+            "cancel",
+            "pay",
+            "other"
+          ]
+        },
+        "status": {
+          "enum": [
+            "open",
+            "done",
+            "not_needed"
+          ]
+        },
+        "target_refs": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "item",
+                          "leg",
+                          "journey",
+                          "stay",
+                          "activity",
+                          "service_use",
+                          "vehicle_use",
+                          "service_bundle",
+                          "route",
+                          "trip",
+                          "reservation",
+                          "issue"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/LocalRef"
+                  },
+                  {
+                    "properties": {
+                      "owner": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "item",
+                              "leg",
+                              "journey",
+                              "stay",
+                              "activity",
+                              "service_use",
+                              "vehicle_use",
+                              "service_bundle",
+                              "route",
+                              "trip",
+                              "reservation",
+                              "issue"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "category": {
+          "enum": [
+            "documents",
+            "clothing",
+            "health_supplies",
+            "connectivity",
+            "equipment",
+            "booking",
+            "verification",
+            "other"
+          ]
+        },
+        "assignees": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "beneficiaries": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "requirement": {
+          "enum": [
+            "required",
+            "recommended"
+          ]
+        },
+        "window": {
+          "$ref": "common.schema.json#/$defs/TimePlan"
+        },
+        "due": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "fixed"
+                },
+                "time": {
+                  "$ref": "common.schema.json#/$defs/ZonedDateTime"
+                }
+              },
+              "required": [
+                "kind",
+                "time"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "local_date"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "timezone": {
+                  "type": "string",
+                  "format": "iana-timezone"
+                }
+              },
+              "required": [
+                "kind",
+                "date",
+                "timezone"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "relative"
+                },
+                "anchor": {
+                  "type": "object",
+                  "properties": {
+                    "ref": {
+                      "allOf": [
+                        {
+                          "$ref": "common.schema.json#/$defs/Ref"
+                        },
+                        {
+                          "properties": {
+                            "type": {
+                              "enum": [
+                                "item",
+                                "activity",
+                                "service_use",
+                                "trip"
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "field": {
+                      "enum": [
+                        "start",
+                        "end",
+                        "pickup",
+                        "dropoff",
+                        "departure_at"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ref",
+                    "field"
+                  ],
+                  "additionalProperties": false
+                },
+                "offset_minutes": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "kind",
+                "anchor",
+                "offset_minutes"
+              ],
+              "additionalProperties": false
+            }
+          ]
+        },
+        "completion": {
+          "type": "object",
+          "properties": {
+            "completed_at": {
+              "$ref": "common.schema.json#/$defs/ZonedDateTime"
+            },
+            "completed_by": {
+              "$ref": "common.schema.json#/$defs/Participants"
+            },
+            "record_note": {
+              "type": "string",
+              "minLength": 1
+            },
+            "result_refs": {
+              "type": "array",
+              "items": {
+                "$ref": "common.schema.json#/$defs/AnyRef"
+              },
+              "minItems": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "task"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "checklist": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/Id"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "status": {
+                "enum": [
+                  "open",
+                  "done",
+                  "not_needed"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "status"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "preparation": {
+          "type": "object",
+          "properties": {
+            "item_label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "quantity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "unit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "completion_history": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TaskCompletionHistory"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "action",
+        "status",
+        "target_refs"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "done"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "completion"
+            ],
+            "properties": {
+              "completion": {
+                "required": [
+                  "record_note"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Reservation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "confirmed",
+            "cancelled",
+            "unknown"
+          ]
+        },
+        "target_refs": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "item",
+                          "leg",
+                          "journey",
+                          "stay",
+                          "activity",
+                          "service_use",
+                          "vehicle_use",
+                          "service_bundle",
+                          "route"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/LocalRef"
+                  },
+                  {
+                    "properties": {
+                      "owner": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "item",
+                              "leg",
+                              "journey",
+                              "stay",
+                              "activity",
+                              "service_use",
+                              "vehicle_use",
+                              "service_bundle",
+                              "route"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "recorded_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Link"
+          },
+          "minItems": 0
+        },
+        "cancellation_terms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "deadline": {
+                "$ref": "common.schema.json#/$defs/ZonedDateTime"
+              },
+              "boundary": {
+                "enum": [
+                  "before",
+                  "not_after"
+                ]
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidence_refs": {
+                "type": "array",
+                "items": {
+                  "$ref": "common.schema.json#/$defs/AnyRef"
+                },
+                "minItems": 1
+              }
+            },
+            "required": [
+              "description"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "provider",
+        "status",
+        "target_refs"
+      ],
+      "additionalProperties": false
+    },
+    "Coverage": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "state": {
+          "enum": [
+            "active",
+            "expired",
+            "revoked"
+          ]
+        },
+        "scopes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/Id"
+              },
+              "target_ref": {
+                "oneOf": [
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/Ref"
+                      },
+                      {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "item",
+                              "leg",
+                              "journey",
+                              "stay",
+                              "activity",
+                              "service_use",
+                              "vehicle_use",
+                              "service_bundle",
+                              "route"
+                            ]
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "common.schema.json#/$defs/LocalRef"
+                      },
+                      {
+                        "properties": {
+                          "owner": {
+                            "properties": {
+                              "type": {
+                                "enum": [
+                                  "item",
+                                  "leg",
+                                  "journey",
+                                  "stay",
+                                  "activity",
+                                  "service_use",
+                                  "vehicle_use",
+                                  "service_bundle",
+                                  "route"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "validity": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Period"
+                  },
+                  {
+                    "not": {
+                      "required": [
+                        "from_ref"
+                      ]
+                    }
+                  }
+                ]
+              },
+              "participants": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Participants"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "required": [
+                            "group_ids"
+                          ]
+                        },
+                        {
+                          "properties": {
+                            "kind": {
+                              "const": "all"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              "quantity": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "count": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "count"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "unknown"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "state": {
+                "enum": [
+                  "active",
+                  "expired",
+                  "revoked"
+                ]
+              },
+              "previous_scope_id": {
+                "$ref": "common.schema.json#/$defs/Id",
+                "description": "Scope in the directly superseded Coverage; exactly one successor per scope."
+              }
+            },
+            "required": [
+              "id",
+              "target_ref",
+              "validity",
+              "participants",
+              "quantity",
+              "state"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "benefits": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "minLength": 1
+              },
+              "notes": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "reservation_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "reservation"
+                }
+              }
+            }
+          ]
+        },
+        "limits": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "supersedes_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "coverage"
+                }
+              }
+            }
+          ],
+          "description": "Previous confirmation of the same entitlement, not its revocation."
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "scopes",
+        "benefits"
+      ],
+      "additionalProperties": false
+    },
+    "PriceQuote": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "subject_ref": {
+          "$ref": "common.schema.json#/$defs/AnyRef"
+        },
+        "value": {
+          "$ref": "common.schema.json#/$defs/PriceValue"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "eligibility": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "inclusions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "exclusions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/AnyRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "id",
+        "subject_ref",
+        "value",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
+    "Cost": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "active",
+            "cancelled",
+            "superseded"
+          ]
+        },
+        "target_refs": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "item",
+                          "leg",
+                          "journey",
+                          "stay",
+                          "activity",
+                          "service_use",
+                          "vehicle_use",
+                          "service_bundle",
+                          "route",
+                          "reservation"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/LocalRef"
+                  },
+                  {
+                    "properties": {
+                      "owner": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "item",
+                              "leg",
+                              "journey",
+                              "stay",
+                              "activity",
+                              "service_use",
+                              "vehicle_use",
+                              "service_bundle",
+                              "route",
+                              "reservation"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "completeness": {
+          "enum": [
+            "complete",
+            "partial",
+            "unknown"
+          ]
+        },
+        "estimate": {
+          "$ref": "common.schema.json#/$defs/PriceValue"
+        },
+        "confirmed": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/PriceValue"
+            },
+            {
+              "properties": {
+                "kind": {
+                  "enum": [
+                    "exact",
+                    "range",
+                    "from"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "price_quote_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "price_quote"
+                }
+              }
+            }
+          ]
+        },
+        "replaces_cost_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "cost"
+                }
+              }
+            }
+          ]
+        },
+        "quantity_basis": {
+          "type": "object",
+          "properties": {
+            "unit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "rate": {
+              "$ref": "common.schema.json#/$defs/Money"
+            },
+            "quantity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "eligible_member_ids": {
+              "type": "array",
+              "items": {
+                "$ref": "common.schema.json#/$defs/Id"
+              },
+              "minItems": 1
+            },
+            "chargeable_nights": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "unit",
+            "quantity"
+          ],
+          "additionalProperties": false
+        },
+        "allocations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "target_ref": {
+                "$ref": "common.schema.json#/$defs/AnyRef"
+              },
+              "date": {
+                "type": "string",
+                "format": "date"
+              },
+              "money": {
+                "$ref": "common.schema.json#/$defs/Money"
+              },
+              "notes": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "money"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "breakdown": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "money": {
+                "$ref": "common.schema.json#/$defs/Money"
+              },
+              "notes": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "label",
+              "money"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "status",
+        "target_refs",
+        "completeness"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "active"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "estimate"
+                ]
+              },
+              {
+                "required": [
+                  "confirmed"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "Payment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "direction": {
+          "enum": [
+            "payment",
+            "refund"
+          ]
+        },
+        "status": {
+          "enum": [
+            "scheduled",
+            "pending",
+            "settled",
+            "failed"
+          ]
+        },
+        "purpose": {
+          "enum": [
+            "expense",
+            "deposit"
+          ]
+        },
+        "amount": {
+          "$ref": "common.schema.json#/$defs/Money"
+        },
+        "record_note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/AnyRef"
+          },
+          "minItems": 1
+        },
+        "cost_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "cost"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "reservation_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "reservation"
+                }
+              }
+            }
+          ]
+        },
+        "original_payment_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "payment"
+                }
+              }
+            }
+          ]
+        },
+        "settlement": {
+          "type": "object",
+          "properties": {
+            "money": {
+              "$ref": "common.schema.json#/$defs/Money"
+            },
+            "fee_inclusion": {
+              "enum": [
+                "included",
+                "excluded",
+                "unknown"
+              ]
+            }
+          },
+          "required": [
+            "money",
+            "fee_inclusion"
+          ],
+          "additionalProperties": false
+        },
+        "scheduled_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "settled_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        }
+      },
+      "required": [
+        "id",
+        "direction",
+        "status",
+        "purpose",
+        "amount"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "settled"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "settled_at"
+            ],
+            "anyOf": [
+              {
+                "required": [
+                  "record_note"
+                ]
+              },
+              {
+                "required": [
+                  "evidence_refs"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "scheduled"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "required": [
+              "scheduled_at"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "direction": {
+                "const": "refund"
+              }
+            },
+            "required": [
+              "direction"
+            ]
+          },
+          "then": {
+            "required": [
+              "original_payment_ref"
+            ]
+          }
+        }
+      ]
+    },
+    "AuthorizationHold": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "amount": {
+          "$ref": "common.schema.json#/$defs/Money"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "released",
+            "partially_captured",
+            "captured",
+            "expired"
+          ]
+        },
+        "reservation_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "reservation"
+                }
+              }
+            }
+          ]
+        },
+        "captured_payment_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "payment"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "captured_amount": {
+          "$ref": "common.schema.json#/$defs/Money"
+        },
+        "released_amount": {
+          "$ref": "common.schema.json#/$defs/Money"
+        },
+        "expected_release_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "observed_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        }
+      },
+      "required": [
+        "id",
+        "amount",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "ExchangeRate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "base_currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "quote_currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "rate": {
+          "type": "string",
+          "pattern": "^(?:0|[1-9]\\d*)(?:\\.\\d+)?$"
+        },
+        "as_of": {
+          "type": "string",
+          "format": "date"
+        },
+        "source_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "source"
+                }
+              }
+            }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "base_currency",
+        "quote_currency",
+        "rate",
+        "as_of"
+      ],
+      "additionalProperties": false
+    },
+    "Source": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "kind": {
+          "enum": [
+            "user_statement",
+            "confirmation",
+            "official",
+            "observation",
+            "estimate",
+            "synthetic_fixture",
+            "other"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "link_ref": {
+          "$ref": "common.schema.json#/$defs/LocalRef"
+        },
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "published_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/ZonedDateTime"
+            }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "title"
+      ],
+      "additionalProperties": false
+    },
+    "Claim": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "target": {
+          "type": "object",
+          "properties": {
+            "object_ref": {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            "local_ref": {
+              "$ref": "common.schema.json#/$defs/LocalRef"
+            },
+            "field": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "object_ref",
+            "field"
+          ],
+          "additionalProperties": false
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "basis": {
+          "enum": [
+            "user_statement",
+            "confirmation",
+            "official",
+            "observation",
+            "estimate",
+            "synthetic_fixture",
+            "other"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": [
+                "string",
+                "number",
+                "boolean",
+                "null"
+              ]
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "minItems": 0
+            },
+            {
+              "$ref": "common.schema.json#/$defs/Money"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/PriceValue"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/ZonedDateTime"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/Duration"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/Period"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/Participants"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/Location"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/TimePlan"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/AnyRef"
+            }
+          ]
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "source"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "checked_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/ZonedDateTime"
+            }
+          ]
+        },
+        "validity": {
+          "$ref": "common.schema.json#/$defs/Period"
+        },
+        "disposition": {
+          "enum": [
+            "adopted",
+            "disputed",
+            "superseded"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "statement",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "OpenIssue": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/AnyRef"
+          },
+          "minItems": 1
+        },
+        "status": {
+          "enum": [
+            "open",
+            "resolved"
+          ]
+        },
+        "impact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolution_needed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "task"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "target_refs",
+        "status",
+        "impact"
+      ],
+      "additionalProperties": false
+    },
+    "Media": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "kind": {
+          "enum": [
+            "image",
+            "video",
+            "audio"
+          ]
+        },
+        "locator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "source"
+                }
+              }
+            }
+          ]
+        },
+        "usage_rights": {
+          "type": "string",
+          "minLength": 1
+        },
+        "captured_at": {
+          "oneOf": [
+            {
+              "type": "string",
+              "format": "date"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/ZonedDateTime"
+            }
+          ]
+        },
+        "caption": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "locator",
+        "alt"
+      ],
+      "additionalProperties": false
+    },
+    "Citation": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "source_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "const": "source"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "source_ref"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "source_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "const": "source"
+                    }
+                  }
+                }
+              ]
+            },
+            "excerpt": {
+              "type": "string",
+              "minLength": 1
+            },
+            "locator": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "unicode_codepoint_range"
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "required": [
+                "kind",
+                "start",
+                "end"
+              ],
+              "additionalProperties": false
+            },
+            "snapshot_sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "source_ref",
+            "excerpt",
+            "locator",
+            "snapshot_sha256"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "GuideParagraph": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "citations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Citation"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "GuideNote": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "paragraphs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/GuideParagraph"
+          },
+          "minItems": 1
+        },
+        "related_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/AnyRef"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "paragraphs"
+      ],
+      "additionalProperties": false
+    },
+    "TaskCompletionSnapshot": {
+      "type": "object",
+      "properties": {
+        "completed_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "completed_by": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "record_note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "result_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/AnyRef"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "record_note"
+      ],
+      "additionalProperties": false
+    },
+    "TaskChecklistSnapshotEntry": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "open",
+            "done",
+            "not_needed"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "TaskDefinitionSnapshot": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "enum": [
+            "pack",
+            "obtain",
+            "purchase",
+            "install",
+            "activate",
+            "verify",
+            "reserve",
+            "return",
+            "cancel",
+            "pay",
+            "other"
+          ]
+        },
+        "target_refs": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "enum": [
+                          "item",
+                          "leg",
+                          "journey",
+                          "stay",
+                          "activity",
+                          "service_use",
+                          "vehicle_use",
+                          "service_bundle",
+                          "route",
+                          "trip",
+                          "reservation",
+                          "issue"
+                        ]
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/LocalRef"
+                  },
+                  {
+                    "properties": {
+                      "owner": {
+                        "properties": {
+                          "type": {
+                            "enum": [
+                              "item",
+                              "leg",
+                              "journey",
+                              "stay",
+                              "activity",
+                              "service_use",
+                              "vehicle_use",
+                              "service_bundle",
+                              "route",
+                              "trip",
+                              "reservation",
+                              "issue"
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "category": {
+          "enum": [
+            "documents",
+            "clothing",
+            "health_supplies",
+            "connectivity",
+            "equipment",
+            "booking",
+            "verification",
+            "other"
+          ]
+        },
+        "assignees": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "beneficiaries": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "requirement": {
+          "enum": [
+            "required",
+            "recommended"
+          ]
+        },
+        "preparation": {
+          "type": "object",
+          "properties": {
+            "item_label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "quantity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "unit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "task"
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "title",
+        "action",
+        "target_refs"
+      ],
+      "additionalProperties": false
+    },
+    "TaskReopened": {
+      "type": "object",
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reopened_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "TaskCompletionHistory": {
+      "type": "object",
+      "properties": {
+        "completion": {
+          "$ref": "#/$defs/TaskCompletionSnapshot"
+        },
+        "task_snapshot": {
+          "$ref": "#/$defs/TaskDefinitionSnapshot"
+        },
+        "checklist_snapshot": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TaskChecklistSnapshotEntry"
+          },
+          "minItems": 0
+        },
+        "reopened": {
+          "$ref": "#/$defs/TaskReopened"
+        }
+      },
+      "required": [
+        "completion",
+        "task_snapshot",
+        "checklist_snapshot",
+        "reopened"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

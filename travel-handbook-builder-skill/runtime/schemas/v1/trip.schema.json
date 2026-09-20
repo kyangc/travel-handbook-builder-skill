@@ -1,0 +1,807 @@
+{
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "example": {
+      "type": "boolean"
+    },
+    "trip": {
+      "$ref": "#/$defs/Trip"
+    },
+    "days": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Day"
+      }
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Item"
+      }
+    },
+    "places": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Place"
+      }
+    },
+    "access_points": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/AccessPoint"
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Recommendation"
+      }
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Route"
+      }
+    },
+    "journeys": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Journey"
+      }
+    },
+    "legs": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Leg"
+      }
+    },
+    "transport_services": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/TransportService"
+      }
+    },
+    "stays": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Stay"
+      }
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Activity"
+      }
+    },
+    "service_uses": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/ServiceUse"
+      }
+    },
+    "vehicle_uses": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/VehicleUse"
+      }
+    },
+    "service_bundles": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/ServiceBundle"
+      }
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "$ref": "entities.schema.json#/$defs/Path"
+      }
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Task"
+      }
+    },
+    "reservations": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Reservation"
+      }
+    },
+    "coverages": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Coverage"
+      }
+    },
+    "price_quotes": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/PriceQuote"
+      }
+    },
+    "costs": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Cost"
+      }
+    },
+    "payments": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Payment"
+      }
+    },
+    "authorization_holds": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/AuthorizationHold"
+      }
+    },
+    "exchange_rates": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/ExchangeRate"
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Source"
+      }
+    },
+    "claims": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Claim"
+      }
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/OpenIssue"
+      }
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/Media"
+      }
+    },
+    "guide_notes": {
+      "type": "array",
+      "items": {
+        "$ref": "records.schema.json#/$defs/GuideNote"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "revision",
+    "trip",
+    "days",
+    "items"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://travel-handbook.invalid/schema/v1/trip.schema.json",
+  "title": "Travel Handbook 1.0 implementation profile",
+  "$defs": {
+    "Trip": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "start_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "end_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "default_timezone": {
+          "type": "string",
+          "format": "iana-timezone"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "goals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "preferences": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "party": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "members_status": {
+              "enum": [
+                "complete",
+                "incomplete"
+              ]
+            },
+            "members": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "age": {
+                    "type": "object",
+                    "properties": {
+                      "years": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "as_of": {
+                        "type": "string",
+                        "format": "date"
+                      }
+                    },
+                    "required": [
+                      "years"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "declared_category": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "label"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "label": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "member_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "member_ids"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "reporting_currency": {
+          "type": "string",
+          "pattern": "^[A-Z]{3}$"
+        },
+        "budget_scope": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "enum": [
+                "complete",
+                "partial",
+                "unknown"
+              ]
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "budget_rate_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "exchange_rate"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "departure_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "unassigned_item_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "item"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "start_date",
+        "end_date",
+        "default_timezone"
+      ],
+      "additionalProperties": false
+    },
+    "Day": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        },
+        "timezone": {
+          "type": "string",
+          "format": "iana-timezone"
+        },
+        "item_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "const": "item"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "date",
+        "timezone",
+        "item_refs"
+      ],
+      "additionalProperties": false
+    },
+    "Item": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "route",
+            "transport",
+            "activity",
+            "stay_action",
+            "service_action",
+            "bundle_action",
+            "visit",
+            "shopping",
+            "meal",
+            "rest",
+            "errand",
+            "other"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timing": {
+          "$ref": "common.schema.json#/$defs/TimePlan"
+        },
+        "lifecycle": {
+          "enum": [
+            "current",
+            "retired"
+          ]
+        },
+        "subject_ref": {
+          "$ref": "common.schema.json#/$defs/Ref"
+        },
+        "place_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "place"
+                }
+              }
+            }
+          ]
+        },
+        "participants": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "title",
+        "timing"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "route"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subject_ref"
+            ],
+            "properties": {
+              "subject_ref": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "route"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "transport"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subject_ref"
+            ],
+            "properties": {
+              "subject_ref": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "journey"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "activity"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subject_ref"
+            ],
+            "properties": {
+              "subject_ref": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "activity"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "stay_action"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subject_ref",
+              "action"
+            ],
+            "properties": {
+              "subject_ref": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "stay"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "service_action"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subject_ref",
+              "action"
+            ],
+            "properties": {
+              "subject_ref": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "service_use"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "bundle_action"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "subject_ref",
+              "action"
+            ],
+            "properties": {
+              "subject_ref": {
+                "allOf": [
+                  {
+                    "$ref": "common.schema.json#/$defs/Ref"
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "service_bundle"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "visit"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "place_ref"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "other"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "purpose"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "visit",
+                  "shopping",
+                  "meal",
+                  "rest",
+                  "errand",
+                  "other"
+                ]
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "subject_ref"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "not": {
+          "required": [
+            "example"
+          ],
+          "properties": {
+            "example": {
+              "const": true
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "claims": {
+            "items": {
+              "properties": {
+                "basis": {
+                  "not": {
+                    "const": "synthetic_fixture"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,2861 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "Mode": {
+      "enum": [
+        "walking",
+        "cycling",
+        "driving",
+        "taxi",
+        "bus",
+        "rail",
+        "metro",
+        "tram",
+        "air",
+        "ferry",
+        "other"
+      ]
+    },
+    "Effort": {
+      "type": "object",
+      "properties": {
+        "distance_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ascent_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "descent_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "slope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "steps": {
+          "type": "string",
+          "minLength": 1
+        },
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "exposure": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shelter": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lighting": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "source"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Interval": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "start": {
+          "type": "string",
+          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        },
+        "end": {
+          "type": "string",
+          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        },
+        "end_day_offset": {
+          "enum": [
+            0,
+            1
+          ]
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "end_day_offset"
+      ],
+      "additionalProperties": false
+    },
+    "Cutoff": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_time": {
+          "type": "string",
+          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        },
+        "day_offset": {
+          "enum": [
+            0,
+            1
+          ]
+        },
+        "boundary": {
+          "enum": [
+            "before",
+            "not_after"
+          ]
+        },
+        "interval_id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "action",
+        "local_time",
+        "day_offset",
+        "boundary"
+      ],
+      "additionalProperties": false
+    },
+    "WeeklyRule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "state": {
+          "enum": [
+            "open",
+            "closed",
+            "unknown"
+          ]
+        },
+        "intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Interval"
+          },
+          "minItems": 1
+        },
+        "all_day": {
+          "const": true
+        },
+        "cutoffs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Cutoff"
+          },
+          "minItems": 0
+        },
+        "adopted_claim_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "claim"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 7
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "weekdays"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "open"
+              }
+            }
+          },
+          "then": {
+            "oneOf": [
+              {
+                "required": [
+                  "intervals"
+                ],
+                "not": {
+                  "required": [
+                    "all_day"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "all_day"
+                ],
+                "not": {
+                  "required": [
+                    "intervals"
+                  ]
+                }
+              }
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "intervals"
+                  ]
+                },
+                {
+                  "required": [
+                    "all_day"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "DateOverride": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "state": {
+          "enum": [
+            "open",
+            "closed",
+            "unknown"
+          ]
+        },
+        "intervals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Interval"
+          },
+          "minItems": 1
+        },
+        "all_day": {
+          "const": true
+        },
+        "cutoffs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Cutoff"
+          },
+          "minItems": 0
+        },
+        "adopted_claim_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "claim"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "id",
+        "state",
+        "date"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "state": {
+                "const": "open"
+              }
+            }
+          },
+          "then": {
+            "oneOf": [
+              {
+                "required": [
+                  "intervals"
+                ],
+                "not": {
+                  "required": [
+                    "all_day"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "all_day"
+                ],
+                "not": {
+                  "required": [
+                    "intervals"
+                  ]
+                }
+              }
+            ]
+          },
+          "else": {
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "intervals"
+                  ]
+                },
+                {
+                  "required": [
+                    "all_day"
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "Closure": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "start": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "end": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "AvailabilitySchedule": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "enum": [
+            "venue",
+            "breakfast",
+            "lunch",
+            "dinner",
+            "other"
+          ]
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "weekly_rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/WeeklyRule"
+          },
+          "minItems": 0
+        },
+        "date_overrides": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DateOverride"
+          },
+          "minItems": 0
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date"
+        },
+        "valid_to": {
+          "type": "string",
+          "format": "date"
+        },
+        "closures": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Closure"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "scope",
+        "timezone",
+        "weekly_rules",
+        "date_overrides"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "scope": {
+                "const": "other"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "label"
+            ]
+          }
+        }
+      ]
+    },
+    "RoleDetails": {
+      "type": "object",
+      "properties": {
+        "dining": {
+          "type": "object",
+          "properties": {
+            "cuisines": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "dietary_notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "lodging": {
+          "type": "object",
+          "properties": {
+            "check_in_rule": {
+              "type": "string",
+              "minLength": 1
+            },
+            "check_out_rule": {
+              "type": "string",
+              "minLength": 1
+            },
+            "facilities": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "breakfast_notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "retail": {
+          "type": "object",
+          "properties": {
+            "categories": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "brands": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "floor": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "attraction": {
+          "type": "object",
+          "properties": {
+            "viewing_areas": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "reservation_notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "transport_hub": {
+          "type": "object",
+          "properties": {
+            "station_code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "access_notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "service_point": {
+          "type": "object",
+          "properties": {
+            "services": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            },
+            "conditions": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "complex": {
+          "type": "object",
+          "properties": {
+            "facilities": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 0
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        },
+        "area": {
+          "type": "object",
+          "properties": {
+            "extent_notes": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Place": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "attraction",
+              "lodging",
+              "dining",
+              "retail",
+              "complex",
+              "transport_hub",
+              "service_point",
+              "area"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "Known functional classifications. Absence means unrecorded, not no function."
+        },
+        "local_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "parent_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "$ref": "common.schema.json#/$defs/Location"
+        },
+        "timezone": {
+          "type": "string",
+          "minLength": 1
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Link"
+          },
+          "minItems": 0
+        },
+        "content": {
+          "$ref": "common.schema.json#/$defs/Content"
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AvailabilitySchedule"
+          },
+          "minItems": 0
+        },
+        "price_quote_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "price_quote"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "role_details": {
+          "$ref": "#/$defs/RoleDetails"
+        },
+        "operating_status": {
+          "enum": [
+            "planned",
+            "open",
+            "temporarily_closed",
+            "permanently_closed",
+            "unknown"
+          ]
+        },
+        "opened_on": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "dining"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "dining"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "lodging"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "lodging"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "retail"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "retail"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "attraction"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "attraction"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "transport_hub"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "transport_hub"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "service_point"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "service_point"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "complex"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "complex"
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "role_details"
+            ],
+            "properties": {
+              "role_details": {
+                "required": [
+                  "area"
+                ]
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "roles"
+            ],
+            "properties": {
+              "roles": {
+                "contains": {
+                  "const": "area"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AccessPoint": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "place_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "location": {
+          "$ref": "common.schema.json#/$defs/Location"
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Link"
+          },
+          "minItems": 0
+        },
+        "access_notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "place_ref",
+        "name",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "Recommendation": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "place_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "related_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "day",
+                      "item"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "interests": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "duration_advice": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "experience": {
+                "type": "string",
+                "minLength": 1
+              },
+              "duration": {
+                "$ref": "common.schema.json#/$defs/Duration"
+              },
+              "conditions": {
+                "type": "string",
+                "minLength": 1
+              },
+              "notes": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "experience",
+              "duration"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "place_ref",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "Stop": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "endpoint_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "access_point"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dwell": {
+          "$ref": "common.schema.json#/$defs/Duration"
+        }
+      },
+      "required": [
+        "id",
+        "endpoint_ref",
+        "role",
+        "purpose"
+      ],
+      "additionalProperties": false
+    },
+    "Segment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "from_stop_id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "to_stop_id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "mode": {
+              "enum": [
+                "walking",
+                "cycling",
+                "driving",
+                "taxi",
+                "bus",
+                "rail",
+                "metro",
+                "tram",
+                "air",
+                "ferry",
+                "other"
+              ]
+            },
+            "mode_label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "duration": {
+              "$ref": "common.schema.json#/$defs/Duration"
+            },
+            "distance_m": {
+              "type": "number",
+              "minimum": 0
+            },
+            "effort": {
+              "$ref": "#/$defs/Effort"
+            },
+            "access_notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "path_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "path"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "path_direction": {
+              "enum": [
+                "forward",
+                "reverse"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "from_stop_id",
+            "to_stop_id",
+            "mode"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "mode": {
+                    "const": "other"
+                  }
+                },
+                "required": [
+                  "mode"
+                ]
+              },
+              "then": {
+                "required": [
+                  "mode_label"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "notes": {
+              "type": "string",
+              "minLength": 1
+            },
+            "from_stop_id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "to_stop_id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "leg_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "leg"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "from_stop_id",
+            "to_stop_id",
+            "leg_ref"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Route": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "enum": [
+            "current",
+            "retired"
+          ]
+        },
+        "stops": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Stop"
+          },
+          "minItems": 2
+        },
+        "segments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Segment"
+          },
+          "minItems": 1
+        },
+        "mode": {
+          "enum": [
+            "walking",
+            "cycling",
+            "driving",
+            "taxi",
+            "bus",
+            "rail",
+            "metro",
+            "tram",
+            "air",
+            "ferry",
+            "other",
+            "mixed"
+          ]
+        },
+        "mode_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effort": {
+          "$ref": "#/$defs/Effort"
+        },
+        "path_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "path"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "path_usage": {
+          "enum": [
+            "overview",
+            "segments"
+          ]
+        },
+        "vehicle_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "vehicle_use"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "overall_estimate": {
+          "$ref": "common.schema.json#/$defs/Duration"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "stops",
+        "segments"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "other"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "mode_label"
+            ]
+          }
+        }
+      ]
+    },
+    "ServiceDetails": {
+      "type": "object",
+      "properties": {
+        "operator_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "line_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "direction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boarding_notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ride_hailing_notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "headway_minutes": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "Movement": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "scheduled"
+            },
+            "service_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "transport_service"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "board_call_id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            },
+            "alight_call_id": {
+              "$ref": "common.schema.json#/$defs/Id"
+            }
+          },
+          "required": [
+            "kind",
+            "service_ref",
+            "board_call_id",
+            "alight_call_id"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "const": "independent"
+            },
+            "from_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "place",
+                        "access_point"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "to_ref": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "enum": [
+                        "place",
+                        "access_point"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "timing": {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/TimePlan"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "kind": {
+                        "const": "derived"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "from_ref",
+            "to_ref",
+            "timing"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Leg": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": [
+            "walking",
+            "cycling",
+            "driving",
+            "taxi",
+            "bus",
+            "rail",
+            "metro",
+            "tram",
+            "air",
+            "ferry",
+            "other"
+          ]
+        },
+        "mode_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "movement": {
+          "$ref": "#/$defs/Movement"
+        },
+        "vehicle_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "vehicle_use"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "path_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "path"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "path_direction": {
+          "enum": [
+            "forward",
+            "reverse"
+          ]
+        },
+        "service_details": {
+          "$ref": "#/$defs/ServiceDetails"
+        },
+        "effort": {
+          "$ref": "#/$defs/Effort"
+        },
+        "access_notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "movement"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "other"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "mode_label"
+            ]
+          }
+        }
+      ]
+    },
+    "TransferStep": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "necessity": {
+          "enum": [
+            "required",
+            "not_required",
+            "unknown"
+          ]
+        },
+        "duration": {
+          "$ref": "common.schema.json#/$defs/Duration"
+        },
+        "place_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "access_point"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "deadline": {
+          "$ref": "common.schema.json#/$defs/TimeConstraint"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "necessity"
+      ],
+      "additionalProperties": false
+    },
+    "Connection": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "from_leg_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "leg"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "to_leg_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "leg"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "kind": {
+          "enum": [
+            "transfer",
+            "through_stop",
+            "continuation",
+            "unknown"
+          ]
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/TransferStep"
+          },
+          "minItems": 0
+        },
+        "connection_protection": {
+          "enum": [
+            "protected",
+            "unprotected",
+            "unknown"
+          ]
+        },
+        "baggage_through": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "airside_stay": {
+          "enum": [
+            "yes",
+            "no",
+            "unknown"
+          ]
+        },
+        "required_buffer": {
+          "$ref": "common.schema.json#/$defs/Duration"
+        }
+      },
+      "required": [
+        "id",
+        "from_leg_ref",
+        "to_leg_ref",
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "Journey": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "leg_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "leg"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "connections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Connection"
+          },
+          "minItems": 0
+        },
+        "lifecycle": {
+          "enum": [
+            "current",
+            "retired"
+          ]
+        },
+        "preparation": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/TimePlan"
+            },
+            {
+              "not": {
+                "properties": {
+                  "kind": {
+                    "const": "derived"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "leg_refs",
+        "connections"
+      ],
+      "additionalProperties": false
+    },
+    "Call": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "endpoint_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "access_point"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "arrival": {
+          "$ref": "common.schema.json#/$defs/CallTime"
+        },
+        "departure": {
+          "$ref": "common.schema.json#/$defs/CallTime"
+        }
+      },
+      "required": [
+        "id",
+        "endpoint_ref"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "arrival"
+          ]
+        },
+        {
+          "required": [
+            "departure"
+          ]
+        }
+      ]
+    },
+    "TransportService": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mode": {
+          "enum": [
+            "walking",
+            "cycling",
+            "driving",
+            "taxi",
+            "bus",
+            "rail",
+            "metro",
+            "tram",
+            "air",
+            "ferry",
+            "other"
+          ]
+        },
+        "mode_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operator": {
+          "type": "string",
+          "minLength": 1
+        },
+        "service_number": {
+          "type": "string",
+          "minLength": 1
+        },
+        "service_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "calls": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Call"
+          },
+          "minItems": 2
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Link"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "mode",
+        "service_number",
+        "service_date",
+        "calls"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "other"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "mode_label"
+            ]
+          }
+        }
+      ]
+    },
+    "NightCount": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "basis": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "value",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "StayUnit": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "room",
+            "pitch",
+            "cabin"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "period": {
+          "$ref": "common.schema.json#/$defs/Period"
+        },
+        "occupants": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "count",
+        "period"
+      ],
+      "additionalProperties": false
+    },
+    "StayRequest": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "requested",
+            "desired"
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "Stay": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lodging_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "service_bundle"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "use_kind": {
+          "enum": [
+            "overnight",
+            "day_use"
+          ]
+        },
+        "period": {
+          "$ref": "common.schema.json#/$defs/Period"
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StayUnit"
+          },
+          "minItems": 0
+        },
+        "participants": {
+          "$ref": "common.schema.json#/$defs/Participants"
+        },
+        "requests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/StayRequest"
+          },
+          "minItems": 0
+        },
+        "night_count": {
+          "$ref": "#/$defs/NightCount"
+        }
+      },
+      "required": [
+        "id",
+        "lodging_ref",
+        "use_kind",
+        "period"
+      ],
+      "additionalProperties": false
+    },
+    "Activity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "timing": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/TimePlan"
+            },
+            {
+              "not": {
+                "properties": {
+                  "kind": {
+                    "const": "derived"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          ]
+        },
+        "place_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "meeting_point_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "access_point"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Link"
+          },
+          "minItems": 0
+        },
+        "content": {
+          "$ref": "common.schema.json#/$defs/Content"
+        },
+        "price_quote_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "price_quote"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "timing"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceEndpoint": {
+      "type": "object",
+      "properties": {
+        "endpoint_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "access_point"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "timing": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/TimePlan"
+            },
+            {
+              "not": {
+                "properties": {
+                  "kind": {
+                    "const": "derived"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          ]
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "endpoint_ref"
+      ],
+      "additionalProperties": false
+    },
+    "ServiceUse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "rental",
+            "parking",
+            "charging",
+            "connectivity",
+            "shipping",
+            "storage"
+          ]
+        },
+        "validity": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/TimePlan"
+            },
+            {
+              "not": {
+                "properties": {
+                  "kind": {
+                    "const": "derived"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          ]
+        },
+        "pickup": {
+          "$ref": "#/$defs/ServiceEndpoint"
+        },
+        "dropoff": {
+          "$ref": "#/$defs/ServiceEndpoint"
+        },
+        "vehicle_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "vehicle_use"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Link"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "validity"
+      ],
+      "additionalProperties": false
+    },
+    "VehicleUse": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_kind": {
+          "enum": [
+            "owned",
+            "borrowed",
+            "rental"
+          ]
+        },
+        "rental_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "service_use"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "actual_vehicle": {
+          "type": "string",
+          "minLength": 1
+        },
+        "driver_member_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/Id"
+          },
+          "minItems": 0
+        },
+        "requirements": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "id",
+        "source_kind"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_kind": {
+                "const": "rental"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "rental_ref"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "rental_ref"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "ReturnDeadline": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "enum": [
+            "before",
+            "not_after"
+          ]
+        },
+        "time": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        }
+      },
+      "required": [
+        "kind",
+        "time"
+      ],
+      "additionalProperties": false
+    },
+    "PortCall": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "place_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "arrival": {
+          "$ref": "common.schema.json#/$defs/CallTime"
+        },
+        "departure": {
+          "$ref": "common.schema.json#/$defs/CallTime"
+        },
+        "return_deadline": {
+          "$ref": "#/$defs/ReturnDeadline"
+        }
+      },
+      "required": [
+        "id",
+        "place_ref"
+      ],
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "required": [
+            "arrival"
+          ]
+        },
+        {
+          "required": [
+            "departure"
+          ]
+        }
+      ]
+    },
+    "ServiceBundle": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "package",
+            "voyage"
+          ]
+        },
+        "component_refs": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "common.schema.json#/$defs/Ref"
+              },
+              {
+                "properties": {
+                  "type": {
+                    "enum": [
+                      "stay",
+                      "journey",
+                      "activity",
+                      "service_use"
+                    ]
+                  }
+                }
+              }
+            ]
+          },
+          "minItems": 0
+        },
+        "validity": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/TimePlan"
+            },
+            {
+              "not": {
+                "properties": {
+                  "kind": {
+                    "const": "derived"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            }
+          ]
+        },
+        "voyage": {
+          "type": "object",
+          "properties": {
+            "port_calls": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/PortCall"
+              },
+              "minItems": 2
+            }
+          },
+          "required": [
+            "port_calls"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "kind",
+        "component_refs",
+        "validity"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "voyage"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "voyage"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "voyage"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "Vertex": {
+      "type": "object",
+      "properties": {
+        "lat": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "lon": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      },
+      "required": [
+        "lat",
+        "lon"
+      ],
+      "additionalProperties": false
+    },
+    "Path": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/Id"
+        },
+        "notes": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "observed_track",
+            "provider_route",
+            "authored_route",
+            "schematic"
+          ]
+        },
+        "coordinate_system": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Vertex"
+            },
+            "minItems": 2
+          },
+          "minItems": 1
+        },
+        "mode": {
+          "enum": [
+            "walking",
+            "cycling",
+            "driving",
+            "taxi",
+            "bus",
+            "rail",
+            "metro",
+            "tram",
+            "air",
+            "ferry",
+            "other"
+          ]
+        },
+        "mode_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "source"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "generated_at": {
+          "$ref": "common.schema.json#/$defs/ZonedDateTime"
+        },
+        "distance_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "distance_basis": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "coordinate_system",
+        "parts"
+      ],
+      "additionalProperties": false,
+      "dependentRequired": {
+        "distance_m": [
+          "distance_basis"
+        ]
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "mode": {
+                "const": "other"
+              }
+            },
+            "required": [
+              "mode"
+            ]
+          },
+          "then": {
+            "required": [
+              "mode_label"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

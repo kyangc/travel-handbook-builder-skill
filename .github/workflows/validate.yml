@@ -1,0 +1,27 @@
+name: Validate skill release
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify bundle
+        run: python3 travel-handbook-builder-skill/scripts/verify_bundle.py
+      - name: Prepare isolated runtime
+        run: python3 travel-handbook-builder-skill/scripts/setup_runtime.py
+      - name: Smoke test CLI
+        run: travel-handbook-builder-skill/scripts/travel-handbook --help
+      - name: Verify bundle after use
+        run: python3 travel-handbook-builder-skill/scripts/verify_bundle.py
+      - name: Build deterministic release
+        run: python3 tools/build_release.py

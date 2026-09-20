@@ -1,0 +1,139 @@
+"""Single-writer local CLI; state and successful receipts share one file."""
+import argparse
+import json
+import os
+from pathlib import Path
+import tempfile
+
+from . import core
+from scripts.validate_trip import load_json
+
+
+class Parser(argparse.ArgumentParser):
+    def error(self, message):
+        raise core.AuthoringError('INVALID_CLI', message)
+
+
+def read_json(path):
+    try:
+        return load_json(path)
+    except (OSError, UnicodeError, ValueError) as error:
+        raise core.AuthoringError('INPUT_ERROR', str(error), path=str(path)) from error
+
+
+def write_json(path, value, *, replace):
+    """Commit one local file, without claiming concurrent-writer protection."""
+    path = Path(path)
+    if not replace and os.path.lexists(path):
+        raise core.AuthoringError('TARGET_EXISTS', 'Output already exists', path=str(path))
+    payload = json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + '\n'
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8',
+                                         dir=path.parent, prefix='.' + path.name + '.',
+                                         suffix='.tmp', delete=False) as output:
+            temporary = Path(output.name)
+            output.write(payload)
+            output.flush()
+            os.fsync(output.fileno())
+        if not replace and os.path.lexists(path):
+            raise core.AuthoringError('TARGET_EXISTS', 'Output already exists', path=str(path))
+        os.replace(temporary, path)
+        temporary = None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def parser():
+    result = Parser(description='Local travel authoring prototype. Use one writer per state file.')
+    commands = result.add_subparsers(dest='command', required=True, parser_class=Parser)
+    create = commands.add_parser('create')
+    create.add_argument('state', type=Path)
+    create.add_argument('--title', required=True)
+    create.add_argument('--example', action='store_true')
+    import_command = commands.add_parser('import')
+    import_command.add_argument('package', type=Path)
+    import_command.add_argument('state', type=Path)
+    read = commands.add_parser('read')
+    read.add_argument('state', type=Path)
+    read.add_argument('--day')
+    read.add_argument('--type', dest='types', action='append')
+    read.add_argument('--handle', dest='handles', action='append')
+    read.add_argument('--limit', type=int)
+    read.add_argument('--cursor')
+    read.add_argument('--include-source-text', action='store_true')
+    check = commands.add_parser('check')
+    check.add_argument('state', type=Path)
+    apply = commands.add_parser('apply')
+    apply.add_argument('state', type=Path)
+    apply.add_argument('request', type=Path)
+    preview = commands.add_parser('preview')
+    preview.add_argument('state', type=Path)
+    preview.add_argument('request', type=Path)
+    export = commands.add_parser('export')
+    export.add_argument('state', type=Path)
+    export.add_argument('output', type=Path)
+    export.add_argument('--revision', type=int, required=True)
+    return result
+
+
+def execute(args):
+    if args.command == 'create':
+        state = core.new_workspace(args.title, example=args.example)
+        write_json(args.state, state, replace=False)
+        return {'created': True, 'state': str(args.state),
+                'workspace_id': state['workspace_id'], 'revision': state['revision']}, 0
+    if args.command == 'import':
+        state = core.import_package(read_json(args.package))
+        write_json(args.state, state, replace=False)
+        return {'imported': True, 'state': str(args.state),
+                'workspace_id': state['workspace_id'], 'revision': state['revision'],
+                'import_report': state['import_report']}, 0
+
+    # Resolve an existing state symlink consistently for reading and replacement.
+    state_path = args.state.resolve()
+    state = read_json(state_path)
+    if args.command == 'read':
+        selection = {}
+        for name in ('day', 'types', 'handles'):
+            value = getattr(args, name)
+            if value is not None:
+                selection[name] = value
+        local = bool(selection or args.limit is not None or args.cursor is not None
+                     or args.include_source_text)
+        return core.read_workspace(
+            state, selection=selection if local else None, limit=args.limit,
+            cursor=args.cursor, include_source_text=args.include_source_text), 0
+    if args.command == 'check':
+        report = core.check(state)
+        return report, 0 if report['valid'] else 1
+    if args.command == 'apply':
+        candidate, receipt = core.apply(state, read_json(args.request))
+        if not receipt['replayed']:
+            write_json(state_path, candidate, replace=True)
+        return receipt, 0
+    if args.command == 'preview':
+        return core.preview(state, read_json(args.request)), 0
+    artifact = core.export_package(state, revision=args.revision)
+    write_json(args.output, artifact['package'], replace=False)
+    return {'exported': True, 'output': str(args.output),
+            'manifest': artifact['manifest'], 'validation': artifact['validation']}, 0
+
+
+def main(argv=None):
+    try:
+        result, status = execute(parser().parse_args(argv))
+    except core.AuthoringError as error:
+        result, status = error.as_dict(), 1
+    except OSError as error:
+        result, status = {'committed': False, 'code': 'IO_ERROR', 'message': str(error)}, 1
+    except Exception as error:
+        result, status = {'committed': False, 'code': 'INTERNAL_ERROR',
+                          'message': f'{type(error).__name__}: {error}'}, 1
+    print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+    return status
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())
