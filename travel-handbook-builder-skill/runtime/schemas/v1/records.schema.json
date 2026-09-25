@@ -1616,6 +1616,102 @@
       ],
       "additionalProperties": false
     },
+    "MediaUsage": {
+      "type": "object",
+      "properties": {
+        "target_ref": {
+          "oneOf": [
+            {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "const": "trip"
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/Ref"
+                },
+                {
+                  "properties": {
+                    "type": {
+                      "const": "place"
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "purpose": {
+          "enum": [
+            "place_intro",
+            "trip_overview"
+          ]
+        }
+      },
+      "required": [
+        "target_ref",
+        "purpose"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "purpose": {
+                "const": "place_intro"
+              }
+            },
+            "required": [
+              "purpose"
+            ]
+          },
+          "then": {
+            "properties": {
+              "target_ref": {
+                "properties": {
+                  "type": {
+                    "const": "place"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "purpose": {
+                "const": "trip_overview"
+              }
+            },
+            "required": [
+              "purpose"
+            ]
+          },
+          "then": {
+            "properties": {
+              "target_ref": {
+                "properties": {
+                  "type": {
+                    "const": "trip"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
     "Media": {
       "type": "object",
       "properties": {
@@ -1627,6 +1723,46 @@
             "image",
             "video",
             "audio"
+          ]
+        },
+        "representation": {
+          "enum": [
+            "photo",
+            "illustration",
+            "schematic"
+          ]
+        },
+        "creation": {
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "captured"
+                }
+              },
+              "required": [
+                "kind"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "const": "generated"
+                },
+                "generator": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "kind",
+                "generator"
+              ],
+              "additionalProperties": false
+            }
           ]
         },
         "locator": {
@@ -1669,6 +1805,14 @@
         "caption": {
           "type": "string",
           "minLength": 1
+        },
+        "usages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/MediaUsage"
+          },
+          "minItems": 1,
+          "uniqueItems": true
         }
       },
       "required": [
@@ -1676,6 +1820,60 @@
         "kind",
         "locator",
         "alt"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "representation"
+            ]
+          },
+          "then": {
+            "properties": {
+              "kind": {
+                "const": "image"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "creation"
+            ]
+          },
+          "then": {
+            "required": [
+              "representation"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "creation": {
+                "properties": {
+                  "kind": {
+                    "const": "generated"
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            },
+            "required": [
+              "creation"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "captured_at"
+              ]
+            }
+          }
+        }
       ],
       "additionalProperties": false
     },

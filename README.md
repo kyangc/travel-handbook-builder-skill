@@ -65,7 +65,13 @@ kimi --skills-dir "$(pwd)"
 
 ### Codex 或其他 Agent
 
-把完整目录 `travel-handbook-builder-skill/` 放入 Agent 的 skills 目录。不要只复制 `SKILL.md`；公开指南、运行时、Schema、启动器和 manifest 都是 Skill 合同的一部分。
+把完整目录 `travel-handbook-builder-skill/` 放入 Agent 的 skills 目录。不要只复制 `SKILL.md`；公开指南、运行时、Schema、启动器和 manifest 都是 Skill 合同的一部分。首次使用前在目标机器运行上面的完整性校验和 setup，或按 [Skill README](travel-handbook-builder-skill/README.md) 使用已有的合适 Python 环境。
+
+在新的 Codex 任务中可用自然语言指向你**本地私有**的旧行程 Markdown，例如：
+
+> 请用 travel-handbook-builder-skill 根据这份旧行程 Markdown 建立可继续编辑的私人攻略，并给我原目录下的预览。保留原文已确定的事实与未决项，不自行替我选新地点、路线、预订或付款；说明实际写入、尚未确认和页面核验到哪一层。
+
+旅行资料、完整 state 和导出应留在安装目录之外。这个示例只说明用法，不代表对任意真实资料的重建已通过验收。
 
 ## 命令行快速检查
 
@@ -94,7 +100,7 @@ SKILL_DIR="/absolute/path/to/travel-handbook-builder-skill"
 
 ## 验证范围
 
-本版本的外部应用级发布门槛固定为：从 release ZIP 新鲜解压，在独立目录和新会话中使用 Kimi CLI，请求配置显式指定 `kimi-code/k3`、high，且不自动重试或切换模型。冻结案例覆盖多人和多币种、自驾、跨日航班、混合徒步、恢复重放及独立保留案例。只有与发布 asset 相同的候选通过审查才发布；具体 CLI 版本、结果和边界记录在该版本的 GitHub Release notes 中。此类测试不代表操作系统强隔离或所有模型的普遍表现。
+0.2.0 的发布前工程验收包括：以已提交开发源构建候选，核对公开仓库与 release ZIP 同一 manifest/字节，检查私有资料和凭据排除、安装或已配置 Python 的 CLI 路径，以及受影响业务回归。此前的外部 Agent 单例与 0.1.0 Kimi 冻结集分别属于其当时的包和题目；**0.2.0 release asset 尚未完成新会话 Codex 真实旧行程 Markdown 重建**。该真实案例安排在本版发布后，届时另报业务结果、页面证据和未测边界，不把它预写为已通过，也不由单例推普遍可靠性。若未来某版要声明新的自然发现或跨场景能力，应为该声明冻结相应的新会话行为验收；不能因本版验证方式改变而取消必要的安全、正确性或来源核对。
 
 公开版从开发仓库的已验收实现确定性生成，并把内部 Schema 演进历史收敛为单一稳定数据契约 1.0。公开调用方无需执行版本升级，也不会看到开发阶段的多个 draft Schema 目录。
 

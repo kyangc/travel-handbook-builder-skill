@@ -2,6 +2,7 @@
 """Create and verify the skill-local Python environment."""
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,7 @@ def fail(message: str) -> None:
 
 
 def main() -> int:
+    argparse.ArgumentParser(description=__doc__).parse_args()
     if sys.version_info < (3, 12):
         fail(f"Python 3.12 or newer is required; found {sys.version.split()[0]}")
 

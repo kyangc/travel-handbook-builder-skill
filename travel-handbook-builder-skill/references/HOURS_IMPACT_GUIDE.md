@@ -24,6 +24,8 @@ artifact = export_package(state, revision=read_workspace(state)["revision"])
 assert artifact["validation"]["availability_assessments"] == assessments
 ```
 
+上例只适用于首次普通创建或尚未接入 managed 的旧自管完整 state。managed 续作不要读取其私有 state，也不要退回初始化快照；用 `ManagedHandbook.open(ROOT).check()` 或 `scripts/travel-handbook client check ROOT`，从返回的 `report["availability_assessments"]` 读取**当前 state** 诊断，同时核对 `state_revision`、`canonical_revision` 与 `publish_status`。`publish_status=stale` 时该诊断仍是当前 state 的结果，不代表旧 canonical/网页已更新；`report.valid=true` 的 CLI 退出码仍为 0。receipt warnings 是该次提交的历史警告，不替代此报告。
+
 对每个当前kind=meal的安排产生一条记录；其他活动及退役安排不在本轮范围内。item_ref/place_ref是领域引用，可用read_workspace对象record.id查对应handle，不要直接把领域引用当作写方法的handle。
 
 仅选地点唯一的scope=venue（整体营业）规则，不从标题“午餐”猜scope=lunch，不用商场营业代替内部餐厅。若需要核实是否供应午餐、是否过了点单截止或是否已订座，仍须另外核实。limits明确这层边界。
@@ -58,6 +60,6 @@ covered/conflict与已进入区间计算的unknown返回interval（UTC起止）�
 
 支持唯一venue、每周规则、跨夜、绝对closures、明确固定起止、跨时区比较。只读，不推进revision，不把诊断写成业务事实。
 
-以下返回unknown：无地点、无venue、多份venue、日期例外、季节有效期、非空cutoffs、同星期多条规则、显式offset、非唯一或不存在的本地时刻、日期超出计算范围。旧完整输入中若存在当前时区库无法解析的时区，也返回unknown/timezone_not_supported，不因诊断崩溃而中断操作。区间涉及的营业起始日（含前一日）跨度超过7天也暂不计算。DST检测依赖运行环境时区库；没有联网验证营业事实。
+以下返回unknown：无地点、无venue、多份venue、日期例外、季节有效期、非空cutoffs、同星期多条规则、显式offset、非唯一或不存在的本地时刻、日期超出计算范围。未编码的节假日例外不会被诊断自动发现；若先在 `weekly` 误写无条件 `closed`，结果也可能显得确定。旧完整输入中若存在当前时区库无法解析的时区，也返回unknown/timezone_not_supported，不因诊断崩溃而中断操作。区间涉及的营业起始日（含前一日）跨度超过7天也暂不计算。DST检测依赖运行环境时区库；没有联网验证营业事实。
 
 check.valid仅表示结构与现有有限语义有效；conflict仍是warning，unknown仍需检查。导出允许保留这些情况，网页应读取诊断含义，不能把领域包通过Schema当成已安排妥当。

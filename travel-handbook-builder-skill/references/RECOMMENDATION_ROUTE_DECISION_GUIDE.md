@@ -10,32 +10,15 @@ The snapshot remains authoring metadata in the complete state; it is not copied 
 
 If the supplied material explicitly identifies itself as synthetic or fictional, preserve that attribution on every Source cited by the GuideNote paragraph. A parallel `synthetic_fixture` citation does not change a generic snapshot Source. For an exact snapshot citation, include the literal label `synthetic` in the registered snapshot title, while retaining any supplied `fictional` wording; otherwise cite only the `synthetic_fixture` Source. Each exported citation must be safe to read on its own.
 
-Save the complete state after each committed batch. When checking an idempotent replay or resumed write, compare the complete state and revision with the expected result. Object counts alone cannot prove that snapshots, handles, receipts, bindings, decisions, or Issue resolution metadata survived.
+Keep the complete authoring state through the first ordinary `preview`/`apply`/`check` and hand it to a new managed directory before the first webpage, as in the [default workflow](DEFAULT_WORKFLOW_GUIDE.md). The managed directory then owns that state, its source snapshots, later exact requests/receipts, and canonical publication. In a managed continuation, use `client read` for current revision/handles (request source text explicitly when needed); send a supported narrow Place supplement through `prepare-place`, or the original public request—including `source.register` and exact-citation operations—through `prepare-request`, then review and `commit`. Do not save or edit a second complete state or caller journal beside the managed directory. Object counts alone cannot prove that snapshots, handles, receipts, bindings, decisions, or Issue resolution metadata survived; verify the affected records and current revision through the public client. See [the managed client guide](CLIENT_GUIDE.md).
 
-## Keep an exact successful-request journal
+## Preserve the original request for exact replay
 
-The complete state preserves runtime receipts, but it is not the caller's copy of the request payload. After every successful public write, save the exact original request object in a caller-owned `request-journal.json` alongside the other work products:
+The complete state preserves receipts, but a receipt cannot reconstruct the original request. Keep the exact semantic request submitted during ordinary first creation, together with its receipt, including after managed initialization: the managed journal starts with later operations and cannot reconstruct that initial payload. If that ordinary `apply` response is uncertain, replay the same request ID and unchanged payload against the same ordinary state; a successful replay must leave current state/revision unchanged. After initialization, do not continue writing the old input snapshot with ordinary `apply`.
 
-```json
-{
-  "format_version": 1,
-  "requests": [
-    {
-      "request_id": "caller-chosen-stable-id",
-      "expected_revision": 0,
-      "operations": []
-    }
-  ]
-}
-```
+For managed writes, `prepare-request` saves the exact public request; `prepare-place` saves the exact intent and compiled request. Review the preview, then `commit` the returned operation ID. When the commit response is uncertain, retry **that same operation ID**. If preparation's response was lost, repeat the identical request/intent with the same request ID to recover its operation; do not change its expected revision, operations, ordering, or optional fields, or reconstruct it from a receipt/read result. The managed journal is already the continuation record; a second caller-maintained `request-journal.json` is not required.
 
-The example shows the journal shape; a real entry retains the complete submitted request, including every operation and optional field. Add an entry only after `apply` or CLI `apply` succeeds. A failed request and a preview are not successful writes. Keep one copy of an already journaled request when an exact replay returns the original receipt.
-
-In the first authoring round, write `output/request-journal.json`. In a continuation round, load `input/request-journal.json`, preserve every prior entry unchanged, append each newly successful request in commit order, and write the merged journal to `output/request-journal.json`. Store it outside the installed skill directory. This journal is caller persistence metadata, not travel-domain data: do not insert it into private state fields, `source_imports`, GuideNotes, or the canonical package.
-
-To test a same-request replay, select the original object from the journal and submit it unchanged. Do not change its `request_id`, `expected_revision`, operations, ordering, or optional fields, even when the current workspace revision has advanced. Do not reconstruct the payload from a receipt, a read result, reconciliation prose, or remembered intent. A successful historical replay may return `historical_receipt=true`; verify that the complete state and current revision remain unchanged.
-
-If the journal or original entry is missing, report that exact replay cannot be demonstrated. Submitting a reconstructed payload under an old request ID may correctly return `REQUEST_ID_REUSED`; that rejection proves payload protection, not a successful same-request replay.
+For an older **self-managed** complete-state workflow that has not been initialized into a managed directory, continue saving its complete state after each successful ordinary `apply` and preserve each exact original request. If it already has a caller journal, keep its entries unchanged and append only genuinely new successful requests; failed previews/requests and replayed receipts are not new entries. An unchanged historical request can replay at a later revision and return `historical_receipt=true` without rewriting state. If an original request is missing, report that exact replay cannot be demonstrated; `REQUEST_ID_REUSED` for a reconstructed payload is protection, not a successful replay. Do not copy that old self-managed journal into the canonical package or require a new one after managed initialization. [The recovery guide](RECOVERY_READ_PREVIEW_GUIDE.md) distinguishes a complete state from a package-only import.
 
 ## Decide whether a suggestion identifies a Place
 

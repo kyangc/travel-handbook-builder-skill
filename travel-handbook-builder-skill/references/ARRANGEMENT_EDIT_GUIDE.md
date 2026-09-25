@@ -35,6 +35,8 @@
 
 撤下不等于取消现实承诺。Reservation、Coverage、Cost、Payment、Task、Claim 全部保留；active Cost 继续进入 `budget_projection`。receipt 的 `parts.review_refs` 列出与 Item 及其执行所属链相关的当前确认、active Cost、关联 Payment、Task 和 Claim，调用方据此逐项决定是否还需现实取消、退款或人工复核。再次撤下同一 retired Item 返回 `no_change`；本入口不恢复 retired 安排。
 
+若相关 GuideNote 或 open Issue 只关联 Place、文字却描述「当前到访/冲突」，`plan.withdraw` 不会自动改写或解决它们。managed 续作可对该 Place 调用 `client context`，从 `related_items`、`related_guide_notes`、`related_issues` 的有界集合复核当前状态，再按旅客决定显式修订；`plan.move`、`plan.update` 改期后亦同。日期本身的来源事实可保留，不能把撤下等同于来源失效。
+
 ## 修改 Day 日期或时区
 
 ```python

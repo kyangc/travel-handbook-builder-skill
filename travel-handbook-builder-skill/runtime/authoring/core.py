@@ -1014,8 +1014,8 @@ class Editor:
     def plan_update(self, *, target, set=None, clear=None, append_note=None):
         from .time_plans import normalize_time_plan
         item = self.record(target, {'item'})
-        if item.get('lifecycle', 'current') != 'current' or item['kind'] not in {'meal', 'visit', 'shopping', 'rest', 'errand', 'other', 'route', 'transport'}:
-            fail('UNSUPPORTED_VARIANT', 'Only current ordinary, route or transport arrangements can be updated here')
+        if item.get('lifecycle', 'current') != 'current' or item['kind'] not in {'meal', 'visit', 'shopping', 'rest', 'errand', 'other', 'route', 'transport', 'stay_action'}:
+            fail('UNSUPPORTED_VARIANT', 'Only current ordinary, route, transport or Stay action arrangements can be updated here')
         changes = {} if set is None else copy.deepcopy(set)
         removals = [] if clear is None else clear
         if (not isinstance(changes, dict) or not isinstance(removals, list)
@@ -1278,11 +1278,13 @@ from .source_fields import source_field_apply, source_field_resolve
 
 from .reservations import reservation_record, coverage_record, require_record_origin
 from .coverage_revisions import coverage_replace_confirmation, coverage_revoke_scopes
-from .arrangements import day_update, plan_move, plan_withdraw, trip_change_dates
-from .stays import stay_plan, stay_change_plan
+from .arrangements import (day_update, plan_move, plan_withdraw,
+                           trip_change_dates, trip_update)
+from .stays import stay_action_add, stay_action_bind, stay_plan, stay_change_plan
 from .recommendations import recommendation_add, recommendation_update
 from .guide_notes import source_record, guide_note_add, guide_note_update
 from .tasks import task_reopen
+from .media import media_image_add, media_update, media_usage_add, media_usage_remove
 from .party import party_describe, party_member_add, party_member_update, party_group_add
 from .money import (budget_configure, cost_confirm, cost_record,
                     exchange_rate_record, require_cost_origin)
@@ -1295,6 +1297,7 @@ METHODS = {
     'reservation.record': reservation_record, 'coverage.record': coverage_record,
     'coverage.replace_confirmation': coverage_replace_confirmation, 'coverage.revoke_scopes': coverage_revoke_scopes,
     'stay.plan': stay_plan, 'stay.change_plan': stay_change_plan,
+    'stay.action.add': stay_action_add, 'stay.action.bind': stay_action_bind,
     'recommendation.add': recommendation_add, 'recommendation.update': recommendation_update,
     'source.register': source_register, 'source.duration.adopt': source_duration_adopt,
     'source.duration.refresh': source_duration_refresh, 'source.duration.resolve': source_duration_resolve,
@@ -1302,6 +1305,8 @@ METHODS = {
     'source.field.apply': source_field_apply,
     'source.field.resolve': source_field_resolve,
     'source.record': source_record, 'guide.note.add': guide_note_add, 'guide.note.update': guide_note_update,
+    'media.image.add': media_image_add, 'media.update': media_update,
+    'media.usage.add': media_usage_add, 'media.usage.remove': media_usage_remove,
     'issue.record': issue_record, 'issue.resolve': issue_resolve,
     'route.compose': route_compose, 'route.edit': route_edit,
     'route.replace_interval': route_replace_interval,
@@ -1311,7 +1316,8 @@ METHODS = {
     'path.add_schematic': path_add_schematic, 'path.record': path_record,
     'service.record': service_record, 'service.update': service_update,
     'trip.define': Editor.trip_define,
-    'trip.change_dates': trip_change_dates, 'day.add': Editor.day_add,
+    'trip.change_dates': trip_change_dates, 'trip.update': trip_update,
+    'day.add': Editor.day_add,
     'day.update': day_update,
     'place.add': Editor.place_add,
     'access_point.add': Editor.access_point_add, 'access_point.update': Editor.access_point_update,

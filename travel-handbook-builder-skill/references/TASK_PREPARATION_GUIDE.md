@@ -46,7 +46,21 @@
 }}
 ```
 
-以后从回执或 `read` 取得该 handle，可将 status 设为 `open`、`done` 或 `not_needed`。新增项只用：
+以后从回执或 `read` 取得该 handle，可将 status 设为 `open`、`done` 或 `not_needed`。标题纠正使用 rename，只改 title 并保留清单 id、handle、status 和顺序：
+
+```python
+{"method": "task.amend", "args": {
+    "target": task,
+    "checklist_edits": [{
+        "op": "rename", "target": checklist_item,
+        "title": "确认护照有效且在随身包内"
+    }]
+}}
+```
+
+目标必须属于指定 Task；空标题、额外字段和跨 Task handle 会原子拒绝。done Task 必须先 `task.reopen`，改名只影响当前清单，不改写 `completion_history.checklist_snapshot`。成功 request_id 重放不会重复修改。
+
+新增项只用：
 
 ```python
 {"method": "task.amend", "args": {
@@ -55,7 +69,7 @@
 }}
 ```
 
-首版不删除清单项，也不整表覆盖。录错项标为 not_needed，再新增正确项。checklist handle 只在编制工作区内解析；它不是 AnyRef，不能写入导出的通用引用字段。
+当前不删除、重排或整表覆盖清单项。语义错误且不应改名复用的项标为 not_needed，再新增正确项。checklist handle 只在编制工作区内解析；它不是 AnyRef，不能写入导出的通用引用字段。
 
 `task.amend.set` 可整体替换 category、preparation、depends_on，也保留 title、notes、due、window；`clear` 可删除 category、preparation、depends_on、notes、due、window。action、targets、status、completion 和 completion_history 均不能通过 amend 写入。1.0 已增加 assignees/beneficiaries 的 add/amend 快照入口，人数不能冒充负责人；handle形式、all/group展开和历史保护见[成员指南](PARTY_GUIDE.md)。
 

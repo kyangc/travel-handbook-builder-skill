@@ -149,7 +149,7 @@ days 使用 mon/tue/wed/thu/fri/sat/sun；同 weekday 在一组规则中只出�
     "weekly": [{"days": ["tue"], "periods": [{"start": "10:00", "end": "17:00"}]}]}}
 ```
 
-weekly 使用上面的 days/periods/closed/unknown/all_day 形式，只替换列出的星期，未列出的星期、其他用途、已有日期例外和临时关闭区间保留。other 用途仍须额外提供 label。时区必须与已有这组规则一致，不能通过局部编辑悄悄更改其时区。相同时间内容返回 no_change。
+weekly 使用上面的 days/periods/closed/unknown/all_day 形式，只替换列出的星期，未列出的星期、其他用途、已有日期例外和临时关闭区间保留。单独的 `closed` 不可用来编码带节假日开放等例外的“通常关闭”：文字说明不能抵消无条件周规则。若现有接口能忠实表达整套周规则及相关日期/范围例外，可以一并记录；否则省略不成立的无条件周规则，只把已证实且可表达的具体日期事实写入结构化资料，其余保留为有来源的条件文字，不编造或无限列举节假日。other 用途仍须额外提供 label。时区必须与已有这组规则一致，不能通过局部编辑悄悄更改其时区。相同时间内容返回 no_change。
 
 旧规则若把周一、周二写在同一行，只改周二会拆分：未变周一保留原规则身份，周二生成新规则。若涉及的旧规则带截止时刻、注释、依据或被其他记录引用，则拒绝自动拆分/覆盖；有多份同用途、季节有效期或重复星期规则也须先明确目标。未涉及的复杂旧规则完整保留。不要承诺已改星期的 rule ID 不变。
 
@@ -210,6 +210,10 @@ closed_dates 只新增绝对关闭区间：该当地日期 00:00 至下一日期
 完成说明/时间只取明确输入。修改或清空 notes 不会重开任务或删除完成事实。可以 `place.update(set={"content": {"summary": "原文介绍"}})` 补介绍。set 整体替换对应字段，不做嵌套自动合并；省略其他字段即保留。
 
 护照核验/装包、购买/装包、Wi-Fi 领取/归还等基础准备可显式保存 category、preparation、depends_on 与 checklist。数量单位成组校验、清单工作区 handle、open 清单完成门禁、open 依赖提示和 1.0 完成历史见[基础准备待办指南](TASK_PREPARATION_GUIDE.md)。工具不会从一句“准备物品”自动拆成购买和装包，也不接受用人数冒充负责人。
+
+旅行层的明确简介使用 `trip.update(set={"summary": ...})`，删除使用 `clear=["summary"]`；该入口不改日期、时区或其他 Trip 事实。住宿计划建立后，可用 `stay.action.add` 新建显式办理安排，或用 `stay.action.bind` 把已有普通 Item 原位绑定到 Stay，完整边界见[住宿输入指南](STAY_GUIDE.md)。清单子项标题纠正使用 `task.amend.checklist_edits` 的 rename 操作，保持子项身份和状态；done Task 仍须先重开。
+
+Agent 已取得地点照片或生成旅程总领图后，使用 `media.image.add` 分别记录图片 locator、Source、表现形式和制作方式，再以显式 usages 关联 Place/Trip。同一素材可复用，解除用途不会删除资产；许可未知、本地路径和旧包兼容边界见[图片素材指南](MEDIA_GUIDE.md)。工具不搜索、生成、下载、上传或发布图片。
 
 检查和导出：
 

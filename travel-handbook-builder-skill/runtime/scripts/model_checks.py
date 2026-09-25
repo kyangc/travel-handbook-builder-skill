@@ -247,6 +247,20 @@ def check_package(p, require_example=True):
         for part in path['parts']:
             require(len(part) >= 2, 'short path part')
             for point in part: require(-90 <= point['lat'] <= 90 and -180 <= point['lon'] <= 180, 'coordinate range')
+    for media in p.get('media', []):
+        usages = media.get('usages', [])
+        keys = {(usage['target_ref']['type'], usage['target_ref']['id'],
+                 usage['purpose']) for usage in usages}
+        require(len(keys) == len(usages), 'duplicate Media usage')
+        for usage in usages:
+            expected = {'place_intro': 'place', 'trip_overview': 'trip'}[
+                usage['purpose']]
+            require(usage['target_ref']['type'] == expected,
+                    'Media usage purpose/target mismatch')
+        if (media.get('creation', {}).get('kind') == 'generated'
+                and 'source_ref' in media and p.get('example') is not True):
+            require(resolve(media['source_ref'])['kind'] != 'synthetic_fixture',
+                    'generated Media cannot use synthetic_fixture as provenance')
     for coverage in p.get('coverages', []):
         require(not set(coverage) & {'target_refs', 'participants', 'validity'}, 'legacy mutable coverage shape')
         require(bool(coverage.get('scopes')), 'missing coverage scopes')

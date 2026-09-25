@@ -265,6 +265,9 @@ def plan_move(editor, *, target, day, before=None):
              parameter='target')
     target_day_ref = editor.ref(day, {'day'})
     target_day = editor.record(day, {'day'})
+    if item.get('kind') == 'stay_action':
+        from .stays import validate_stay_action_day
+        validate_stay_action_day(editor.package, item, target_day, parameter='day')
     source_kind, source = _item_ownership(editor.package, item_ref)
 
     before_ref = None
@@ -370,6 +373,10 @@ def day_update(editor, *, target, date=None, timezone=None):
         item = items.get(item_ref['id'])
         if item is None or item.get('lifecycle', 'current') != 'current':
             fail('STATE_FORMAT', 'Day owns a missing or retired Item')
+        if item.get('kind') == 'stay_action':
+            from .stays import validate_stay_action_day
+            validate_stay_action_day(editor.package, item, proposed,
+                                     parameter=changed[0])
         _protect_calendar_change(editor.package, item, item_ref, previous, proposed,
                                  changed[0])
     if date is not None:
@@ -402,6 +409,24 @@ def trip_change_dates(editor, *, start_date=None, end_date=None):
     if current != previous:
         editor.parts['date_range_change'] = {'before': previous, 'after': current}
     trip_ref = {'type': 'trip', 'id': trip['id']}
+    handle = next((value for value, ref in editor.state['handles'].items()
+                   if ref == trip_ref), None)
+    if handle is None:
+        fail('STATE_FORMAT', 'Workspace trip handle is missing')
+    return {'handle': handle}
+
+
+def trip_update(editor, *, set=None, clear=None):
+    """Edit the one public descriptive Trip field without widening calendar edits."""
+    require_edit_version(editor)
+    from .core import edit_fields
+    changes = {} if set is None else copy.deepcopy(set)
+    clear_fields = [] if clear is None else copy.deepcopy(clear)
+    if isinstance(changes, dict) and 'summary' in changes:
+        nonempty(changes['summary'], 'set.summary')
+    edit_fields(editor.package['trip'], changes=changes, clear=clear_fields,
+                append_note=None, allowed={'summary'}, clearable={'summary'})
+    trip_ref = {'type': 'trip', 'id': editor.package['trip']['id']}
     handle = next((value for value, ref in editor.state['handles'].items()
                    if ref == trip_ref), None)
     if handle is None:

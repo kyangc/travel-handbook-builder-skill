@@ -1,22 +1,25 @@
 # Travel Handbook Authoring public API
 
-This index contains the callable protocol and method inventory. Read `CALLER_GUIDE.md` first, then only the topic guides needed for the supplied material. Live `read.capabilities` remains authoritative.
+This is the callable protocol and method inventory, not a second setup path. Start with [the short default CLI workflow](DEFAULT_WORKFLOW_GUIDE.md). Read the [managed continuation guide](CLIENT_GUIDE.md) for a relevant edit, or [the optional Python examples](PYTHON_OPTIONAL_GUIDE.md) only when programmatic state handling is needed; use `CALLER_GUIDE.md` and other topic guides only for the methods the material calls for. Live `read.capabilities` remains authoritative.
 
-## 运行
+新攻略先用既有公开 request 完成首次创建，经 `preview` 审阅、`apply`、`check` 有效后，在第一次打开网页前用[受管理客户端](CLIENT_GUIDE.md)初始化最终新目录；后续同一目录以 `client context`/`client read`/`prepare-*`/`commit` 编辑，以 `client check` 读取当前完整诊断。纠正、availability/开放时间、精确引用、旧 Note 修改和安排调整仍使用下文原专业方法**构造请求**，但在 managed 生命周期内递交；不要直改其文件或对其运行普通 `apply`。撤下和解绑不是彻底删除，未列出的删除方法不可调用。已有外部 canonical 暂不能接入这条路径。
 
-安装后的 Skill 使用下列 `scripts/travel-handbook` 启动器；在开发仓库中可将每条命令等价替换为 `python3 -m authoring`。两种入口使用同一核心：
+## 运行：默认路径中的公共命令
+
+安装后的 Skill 使用 `scripts/travel-handbook` 启动器；开发仓库中可等价使用 `python3 -m authoring`。下面只是命令顺序速查，具体路径、首次 request、预览审阅和失败恢复按[默认工作流](DEFAULT_WORKFLOW_GUIDE.md)，**不要整段自动提交**：
 
 ```sh
 scripts/travel-handbook create /tmp/lunch-authoring-state.json --title 示例午餐行 --example
-scripts/travel-handbook import /tmp/existing-trip.json /tmp/imported-state.json
-scripts/travel-handbook apply /tmp/lunch-authoring-state.json /tmp/lunch-request.json
-scripts/travel-handbook preview /tmp/lunch-authoring-state.json /tmp/lunch-request.json
 scripts/travel-handbook read /tmp/lunch-authoring-state.json
+scripts/travel-handbook preview /tmp/lunch-authoring-state.json /tmp/lunch-request.json
+scripts/travel-handbook apply /tmp/lunch-authoring-state.json /tmp/lunch-request.json > /tmp/lunch-receipt.json
 scripts/travel-handbook check /tmp/lunch-authoring-state.json
-scripts/travel-handbook export /tmp/lunch-authoring-state.json /tmp/lunch-trip.json --revision 1
+scripts/travel-handbook client init "/tmp/managed handbook" --state /tmp/lunch-authoring-state.json
+scripts/travel-handbook client read "/tmp/managed handbook"
+scripts/travel-handbook client check "/tmp/managed handbook"
 ```
 
-create/export 拒绝覆盖已存在的目标，apply 只替换指定状态文件。失败退出非零并输出 JSON 诊断；check 未通过也退出非零。CLI 严格拒绝重复 JSON 键与非有限数字。状态和成功回执在同一文件中原子替换；**只支持单写者串行使用**，没有多进程锁、事务数据库或断电持久性保证。状态文件包含编辑信息，应当保留；给网页的是 export 导出的领域 JSON。
+先从 read 取真实 revision，再作者化 request；`--example` 仅用于合成演示。首次 `check.valid=true` 才 `client init`，网页从一开始读取 `ROOT/private-handbook.json`。后续专业写入用 `client prepare-request` 审阅后 `client commit`，支持的窄 Place 补充可用 `prepare-place`。`client check` 的 `report` 属于当前 state，`publish_status=stale` 时不能说旧网页已更新。CLI 失败非零并输出结构化 JSON；严格拒绝重复键与非有限数字。旧自管完整 state 的 `import`/`export` 与手工保存流程只见[恢复指南](RECOVERY_READ_PREVIEW_GUIDE.md)，不要用于 managed 目录。
 
 `/tmp/lunch-request.json` 最小示例：
 
@@ -38,18 +41,7 @@ create/export 拒绝覆盖已存在的目标，apply 只替换指定状态文件
 
 ## Python 与公共协议
 
-```python
-from authoring import (new_workspace, import_package, apply, preview,
-                       read_workspace, check, export_package)
-
-state = new_workspace("示例午餐行", example=True)
-state, receipt = apply(state, request)
-view = read_workspace(state)  # 完整读取；局部读取与恢复边界见专门指南
-review = preview(state, request)  # 同一 apply 引擎，无提交和临时身份输出
-report = check(state)
-artifact = export_package(state, revision=view["revision"])
-trip_json = artifact["package"]
-```
+程序内创建和从任意已有 managed ROOT 做专业补充的可独立示例在[Python 备选指南](PYTHON_OPTIONAL_GUIDE.md)。下面是各公开方法的合同，不是另一条默认持久化流程。
 
 Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`as_dict()` 给出未提交诊断。不能直接写 state 或 package 修补结果后宣称方法成功。read 的记录是副本，公开 schema_version、capabilities.coordinate_inputs 坐标输入要求及独立 budget_projection，可查当前对象和链接的 owner；无参数保持完整读取，selection/limit/cursor 提供有界局部读取，准确恢复与分页契约见[专门指南](RECOVERY_READ_PREVIEW_GUIDE.md)。
 
@@ -68,6 +60,7 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 |---|---|---|
 | `trip.define` | start_date、end_date、default_timezone | 只能定义一次；标题来自 new_workspace；新包 1.0 |
 | `trip.change_dates` | start_date/end_date 至少一项 | 不批量移动 Day；范围外 Day 返回具体 warning 并保留 |
+| `trip.update` | set.summary 或 clear.summary | 只改旅行摘要；保留 Trip 身份、日期、时区和其他事实 |
 | `party.describe` | count、members_status、clear 至少一项 | 人数和名单完整性独立，不生成匿名成员 |
 | `party.member.add` | label | age、declared_category；返回稳定 member handle |
 | `party.member.update` | target、set | label可改，年龄/原词类别只补缺失或同值 |
@@ -91,15 +84,17 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 | `coverage.revoke_scopes` | target、scopes；操作 origin 必填 | 仅撤销选中的既有整范围，不生成退款 |
 | `stay.plan` | lodging、use_kind | period、units、participants、requests、night_count、notes；不生成订单或办理 Item |
 | `stay.change_plan` | target | set/clear/append_note、units add/update；保留身份，不改供应方确认 |
+| `stay.action.add` | stay、action、title | day、timing、participants、purpose、notes、before；显式建立办理 Item，不猜 action，不生成订单/费用/待办 |
+| `stay.action.bind` | target、stay、action | 把 current 普通 Item 原位细化为住宿办理，保留 Item 身份、内容、出处及外部引用；冲突原子拒绝 |
 | `recommendation.add` | place、reason | related、interests、duration_advice、notes；不排入日程 |
 | `recommendation.update` | target | set/clear/append_note；保留推荐主体，列表整体替换 |
 | `plan.add` | kind、title；kind=other 时还需 purpose | place、timing、participants、purpose、day、before；有 day 时省略 before 追加，提供时插到同 Day current Item 前；可省 day 创建已选待排 Item，但不能同时传 before；kind 仅 meal/visit/shopping/rest/errand/other；shopping 可省略 place，visit 仍必填；扩展 timing |
-| `plan.update` | target | set、clear、append_note；1.0 current shopping 可 set.place/clear.place，并检查结构化执行事实 blocker；1.0 时间变更检查已确认/完成事实 |
+| `plan.update` | target | set、clear、append_note；current stay_action 可改 title/purpose/notes/timing/participants，不可换 Stay/action/place；1.0 current shopping 可 set.place/clear.place，并检查结构化执行事实 blocker；1.0 时间变更检查已确认/完成事实 |
 | `plan.move` | target、day | before；可把待排Item原身份归日；显式排序，不平移时间或执行对象 |
 | `plan.withdraw` | target、reason | Item及主Journey/Route退役，保留订单、权益、费用、付款、待办与Claim并返回review refs |
 | `task.add` | title、action、targets | notes、category、preparation、depends_on、checklist、assignees、beneficiaries；状态 open，1.0个人范围写快照并允许具体 Issue 目标 |
 | `task.complete` | target、record_note | completed_at；open 清单阻止完成，open 依赖只提示，不推翻明确完成事实 |
-| `task.amend` | target | set/clear/append_note、checklist_edits；支持assignees/beneficiaries，done定义字段须先reopen |
+| `task.amend` | target | set/clear/append_note、checklist_edits；清单支持 add/set_status/rename，rename 保留 id/status/顺序；支持assignees/beneficiaries，done定义字段须先reopen |
 | `task.reopen` | target、reason | reopened_at；只重开 done Task 并追加不可变完成快照 |
 | `issue.record` | title、targets、impact | resolution_needed；只接受明确 Place handle，建立 open Issue，不定位 Route/Segment |
 | `issue.resolve` | target、resolution_note；operation.origin 必需 | 单调 open→resolved，生成 status Claim；同值 no_change、矛盾拒绝 |
@@ -121,6 +116,10 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 | `source.field.resolve` | conflict、choice、reason | 只裁决当前、未过期的签名冲突；可保留人工值或采用提议，不提供通用同步 |
 | `guide.note.add` | title、paragraphs | related；段落可带普通来源或精确原文 citation |
 | `guide.note.update` | target | title、paragraphs、related、clear_related；保持说明身份，段落整体替换 |
+| `media.image.add` | locator、alt、representation | creation、source、usage_rights、captured_at、caption、usages；只记录图片，不下载/生成/发布 |
+| `media.update` | target | set/clear 仅限 alt、caption、usage_rights；保留素材身份、位置、来源和用途 |
+| `media.usage.add` | target、subject、purpose | place_intro→Place，trip_overview→Trip；同一关系重复为 no_change |
+| `media.usage.remove` | target、subject、purpose | 只解除精确用途；最后一个用途移除后仍保留 Media |
 | `source.duration.adopt` | target、part、key、anchor、minutes、basis | 明确采用单个 Stop/Segment 耗时并建立来源基线 |
 | `source.duration.refresh` | binding_id、anchor、minutes、basis | 比较实际基线、当前值及依据；有冲突则整批拒绝 |
 | `source.duration.resolve` | conflict、choice、reason | 保留当前或采用已签发提议；同一冲突仅能裁决一次 |
@@ -130,7 +129,8 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 - Place：name、roles、local_name、aliases、address、location、timezone、content、notes、availability；除 name 外可 clear。
 - AccessPoint：name、location、access_notes、notes；除 name 外可 clear。place_ref 与 kind 不可改。
 - Item：title、purpose、notes、timing、participants；只有 purpose、notes 可 clear；想把时间改回未知应显式 set timing 为 unknown。
-- Task：title、notes、due、window、category、preparation、depends_on、assignees、beneficiaries；这些可编辑字段除 title 外可 clear。清单只接受 add/set_status。done Task 的基础定义字段、清单和人群定义须先 reopen；notes/due/window 仍可改；相同完成说明和时间再次完成返回 no_change，不同完成事实拒绝覆盖。
+- Task：title、notes、due、window、category、preparation、depends_on、assignees、beneficiaries；这些可编辑字段除 title 外可 clear。清单只接受 add/set_status/rename，其中 rename 保留子项身份、状态和顺序。done Task 的基础定义字段、清单和人群定义须先 reopen；notes/due/window 仍可改；相同完成说明和时间再次完成返回 no_change，不同完成事实拒绝覆盖。
+- Media：alt、caption、usage_rights；caption、usage_rights 可 clear。locator、kind、representation、creation、source_ref、id 不可改，用途通过 media.usage.add/remove 单独维护。
 
 `timing` 可用封闭的友好输入，1.0 的 exact/estimated/unknown 边界、end-only、相对结束、严格 after、诊断与事实保护见[时间指南](TIME_PLAN_GUIDE.md)。`participants` 的 member/group handle、Task快照和保护见[成员指南](PARTY_GUIDE.md)。复杂价格 value 等其他局部值仍使用规范 Schema 的小结构。常见链接、单值报价、每周营业规则已有较直接的输入；这只覆盖本轮范围，不代表全部领域参数已足够易用。
 

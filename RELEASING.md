@@ -20,8 +20,8 @@
 
 ```sh
 python3 scripts/prepare_public_release.py \
-  --version 0.1.0 \
-  --release-repo ../travel-handbook-builder-skill
+  --version 0.2.0 \
+  --release-repo /absolute/path/to/travel-handbook-builder-skill
 ```
 
 生成器会用命令中的版本更新 Skill manifest 与 release tag；任何下一版本的修改仍应先回到开发仓库模板。
@@ -29,7 +29,7 @@ python3 scripts/prepare_public_release.py \
 ## 4. Verify generated files
 
 ```sh
-python3 tools/refresh_manifest.py --version 0.1.0 --release-tag v0.1.0
+python3 tools/refresh_manifest.py --version 0.2.0 --release-tag v0.2.0
 python3 travel-handbook-builder-skill/scripts/verify_bundle.py
 python3 travel-handbook-builder-skill/scripts/setup_runtime.py
 travel-handbook-builder-skill/scripts/travel-handbook --help
@@ -42,14 +42,15 @@ setup 后再次 verify 是必需项，用于确认正常运行没有污染受校
 
 - 仅改发布元数据时，验证 manifest、安装、CLI 和 ZIP 即可。
 - 修改 `SKILL.md`、公开指南、运行时或 Schema 时，运行受影响的业务回归。
-- 改变 Agent 理解或选择操作的方式时，至少用一个新目录、新会话、无历史成功答案的自然发现案例验收。
+- 对新行为按风险运行受影响的公开接口、数据保持和预览验证；历史测试与不同候选包的单例不能冒充当前 release asset 的通过结果。
+- 当本版**声明**新的自然发现、跨模型或跨场景能力，或该行为是发布阻断风险时，先用与该声明相称的新目录、新会话案例验收；失败保留，不补教或挑成功样本。若真实资料体验明确安排为发布后验，发布说明须写明尚未验收的范围与后续结果入口，不能说已通过。
 - 失败记录不得由修复后的成功覆盖；新候选使用新证据目录。
 
 ## 6. Build release ZIP
 
 ```sh
 python3 tools/build_release.py
-shasum -a 256 dist/travel-handbook-builder-skill-0.1.0.zip
+shasum -a 256 dist/travel-handbook-builder-skill-0.2.0.zip
 ```
 
 构建器只打包 manifest 声明的文件与 `MANIFEST.json`，使用固定时间戳和文件权限生成确定性 ZIP。
@@ -57,10 +58,10 @@ shasum -a 256 dist/travel-handbook-builder-skill-0.1.0.zip
 ## 7. Publish
 
 ```sh
-git tag -a v0.1.0 -m "travel-handbook-builder-skill v0.1.0"
+git tag -a v0.2.0 -m "travel-handbook-builder-skill v0.2.0"
 git push origin main --follow-tags
-gh release create v0.1.0 dist/travel-handbook-builder-skill-0.1.0.zip \
-  --title "travel-handbook-builder-skill v0.1.0" \
+gh release create v0.2.0 dist/travel-handbook-builder-skill-0.2.0.zip \
+  --title "travel-handbook-builder-skill v0.2.0" \
   --notes-file /path/to/release-notes.md
 ```
 

@@ -137,8 +137,24 @@ def edit_checklist(editor, task_handle, edits):
                 fail('REFERENCE_NOT_FOUND', 'Checklist entry is not present on the target Task',
                      reference=edit['target'], parameter=f'{path}.target')
             record['status'] = edit['status']
+        elif edit['op'] == 'rename':
+            if set(edit) != {'op', 'target', 'title'}:
+                fail('INVALID_ARGUMENT', 'Checklist rename requires op, target and title only',
+                     parameter=path)
+            nonempty(edit['title'], f'{path}.title')
+            handle = editor.handle(edit['target'])
+            ref = editor.state['handles'][handle['handle']]
+            if (ref.get('kind') != 'checklist' or ref.get('owner') != task_ref):
+                fail('REFERENCE_KIND_MISMATCH', 'Checklist entry does not belong to the target Task',
+                     reference=edit['target'], parameter=f'{path}.target')
+            record = next((entry for entry in task.get('checklist', [])
+                           if entry['id'] == ref['id']), None)
+            if record is None:
+                fail('REFERENCE_NOT_FOUND', 'Checklist entry is not present on the target Task',
+                     reference=edit['target'], parameter=f'{path}.target')
+            record['title'] = edit['title']
         else:
-            fail('INVALID_ARGUMENT', 'Checklist edit op must be add or set_status',
+            fail('INVALID_ARGUMENT', 'Checklist edit op must be add, set_status or rename',
                  parameter=f'{path}.op')
     register_checklist(editor, task_handle, additions)
 

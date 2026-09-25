@@ -39,6 +39,31 @@ recorded_path_contract = contracts["path.record"]
 
 这里的 `place` 是 `receipt["aliases"]["place"]` 或读取对象后组装的 `{"handle": "..."}`。同批前面的 `place.add` 使用 `as="place"` 时，可写 `target={"local":"place"}`。没有地址、时区就省略对应字段；不从旅行默认时区推断地点时区。
 
+## 地点内容与建议时长
+
+`place.update.set.content` 接受地点本身的通用介绍和实用信息。它会整体替换现有 content；更新前先读取当前 Place，保留仍成立且未获授权删除的子字段。`duration_advice` 是对象列表，每项至少包含 `experience` 和规范 `duration`：
+
+```python
+{"method": "place.update", "args": {
+    "target": place,
+    "set": {"content": {
+        "summary": "有可靠来源支持的地点简介。",
+        "highlights": ["对本次游览有用的看点"],
+        "visit_advice": ["有来源支持的实用提示"],
+        "duration_advice": [{
+            "experience": "参观主要展区",
+            "duration": {"min_minutes": 60, "max_minutes": 90},
+            "conditions": "不含特别活动排队时间",
+            "notes": "建议时长为估算"
+        }]
+    }}
+}}
+```
+
+这里不能把 `duration_advice` 写成字符串、字符串列表或 `{experience, minutes}`。`recommendation.add` 的公开作者入参使用 `minutes`，运行时再转换成规范 `duration`；`place.update.set.content.duration_advice` 直接接收规范对象，两者同名但输入形状不同。未知建议时长时省略该项，不填零或虚构范围。
+
+Place content 当前没有字段级 citation。先登记 Source，再用关联该 Place 的 GuideNote 按有实质区别的事实簇说明依据，例如分别覆盖“身份与历史”“开放与票务”“交通入口”“现场限制”；同一来源支持同一事实簇时无需逐句重复引用。覆盖报告只有在所有已采用的重要事实簇都有来源、检索或适用日期，并列出剩余不确定性时才能标 `covered`。任何重要事实簇仍无来源时标 `partial` 或 `gap`，明确未覆盖内容、原因和下一步；`check.valid=true` 不能替代来源覆盖判断。
+
 ## 完整坐标对象
 
 假设原资料明确声明坐标是 WGS84、定位仅为近似点，并给出 `latlng=[35.5, 139.5]`（**纬度在前，经度在后**），可写：

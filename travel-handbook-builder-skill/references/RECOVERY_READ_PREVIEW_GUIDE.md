@@ -12,7 +12,9 @@ import json
 from authoring import export_package, read_workspace
 
 def save_json(path, value):
-    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    path = Path(path)
+    with path.open("x", encoding="utf-8") as output:
+        output.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
 
 save_json("trip-state.json", state)  # 完整 state，用于续作。
 export_report = export_package(state, revision=read_workspace(state)["revision"])
@@ -21,6 +23,40 @@ save_json("export-report.json", export_report)  # 可选诊断报告；绝不作
 ```
 
 若保存完整 report，使用 `export-report.json` 之类的独立名称；不要把它命名为 handbook/package，也不要传给 `import_package` 或 CLI `import`。
+
+此例只适用于尚未进入 managed、三个目标都不存在的**调用方自管**文件；`open("x")` 拒绝覆盖。新攻略默认应在首次网页前使用[受管理客户端](CLIENT_GUIDE.md)，不再手写这些文件。已在网页使用的旧自管 canonical 暂不能自动 `attach`；若继续旧路径，只替换调用方明确拥有的文件，候选同目录写入、重读并验证后再原子替换，不能把旧 state 当作 managed 的续作输入。
+
+旧自管路径若要续作，可对**原调用方拥有且已存在**的文件执行以下同目录替换；先保存新 state 和 `export_package` 结果并核对 revision，不用于 managed 目录或任意用户文件：
+
+```python
+import os
+import tempfile
+from authoring import check, import_package
+
+def replace_owned_json(path, value, *, canonical=False):
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(f"not an existing caller-owned file: {path}")
+    descriptor, temporary_name = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as output:
+            json.dump(value, output, ensure_ascii=False, indent=2)
+            output.write("\n")
+            output.flush()
+            os.fsync(output.fileno())
+        loaded = json.loads(temporary.read_text(encoding="utf-8"))
+        if loaded != value:
+            raise ValueError("candidate JSON changed on disk")
+        if canonical and not check(import_package(loaded))["valid"]:
+            raise ValueError("candidate canonical is invalid")
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
+```
+
+只有在调用方已经明确拥有上述路径时才可使用；这不是并发写者间的比较并替换事务。默认 managed 续作只用 `client prepare-*`/`commit`，由客户端完成候选验证与发布。
 
 ## 打开 state 与导入 package
 

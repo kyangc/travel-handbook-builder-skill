@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -P -- "$(dirname -- "$0")" && pwd)
+exec "$SCRIPT_DIR/python" "$SCRIPT_DIR/preview_service.py" "$@"

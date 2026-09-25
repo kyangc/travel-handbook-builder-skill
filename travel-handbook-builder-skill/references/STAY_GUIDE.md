@@ -96,6 +96,31 @@ Stay 改期不移动各 Unit 的期间；Unit 改期不改 Stay。期间是否�
 }}
 ```
 
-同批可用 `{"local":"stay"}` 或 `{"local":"stay","part":{"kind":"unit","key":"room-a"}}`。新增待办为 open，`task.complete` 只记录动作完成，不修改 Stay/Unit，不生成预订、已获权益或付款。Place、Recommendation 及其他局部类型尚不能作为待办目标。入住/退房办理 Item 仍没有专门创建入口。
+同批可用 `{"local":"stay"}` 或 `{"local":"stay","part":{"kind":"unit","key":"room-a"}}`。新增待办为 open，`task.complete` 只记录动作完成，不修改 Stay/Unit，不生成预订、已获权益或付款。Place、Recommendation 及其他局部类型尚不能作为待办目标。
 
 非法输入、跨 Stay 的 Unit 编辑、未知 handle、重复 key、未处理旧夜数，都拒绝整批提交；本批之前的合法修改也不会留下。
+
+## 把住宿办理写进日程
+
+入住、退房、寄存、早餐、出发或返回等已选安排使用显式的住宿办理方法。`action` 必须来自原材料或调用方判断，工具不从标题、purpose 或 notes 猜动作。
+
+```python
+{"method":"stay.action.add", "as":"check-in", "args":{
+    "stay":stay, "action":"check_in", "title":"办理入住",
+    "day":check_in_day, "purpose":"领取房卡"
+}}
+```
+
+day 可省略，表示安排已经选定但尚未归日；之后用 `plan.move` 原位放入 Day。提供 before 时必须同时提供 day，且锚点必须是该 Day 的 current Item。timing/participants 省略时保存 unknown。住宿依托为 Place 时，办理 Item 使用同一 `place_ref`；方法不会创建 Reservation、Coverage、Cost、Payment 或 Task。
+
+若已有普通 Item 已明确表达同一办理动作，不要删掉再新建：
+
+```python
+{"method":"stay.action.bind", "args":{
+    "target":existing_item, "stay":stay, "action":"check_in"
+}}
+```
+
+bind 只接受 current meal/visit/shopping/rest/errand/other，并保持 Item id、Day/待排归属、标题、时间、参与者、purpose、notes、既有 Claim 及所有外部引用。缺失的住宿地点可补成 Stay 的 lodging Place；不同地点、不同 subject/action、受 confirmation/observation Claim 保护的拟改字段或结构型 Item 会原子拒绝。已是同一 Stay/action 的 stay_action 重提为 no_change；更换 Stay/action 需要后续受控替换能力。
+
+Stay.period 为 local_dates 时，check_in 只能放入住日，check_out 只能放退房日，其他住宿动作需在含首尾的范围内，Day 时区必须一致。该约束也适用于后续 `plan.move`、`day.update` 与 `stay.change_plan`。`plan.update` 可修订 stay_action 的 title、purpose、notes、timing、participants；不能借此更换 Stay、action 或 place。撤下仍用 `plan.withdraw`，身份与既有引用按通用安排语义保留。

@@ -24,6 +24,8 @@ kind 使用 Source 既有枚举：`user_statement`、`confirmation`、`official`
 
 Source 元数据不可原位更新。需要纠正时，新建 Source，再用 `guide.note.update` 整体替换对应 paragraphs。
 
+普通材料出处采用 `source.record` + `guide.note.add`/`guide.note.update` 即可；只有需要原文快照、精确引用或稳定身份与字段刷新时，才分别使用下文 `source.register` 或[有界来源采用协议](SOURCE_ADOPTION_GUIDE.md)。普通引用不要求建立来源采用 binding。
+
 ## 新建全局或关联说明
 
 全局说明省略 related：
@@ -106,6 +108,8 @@ GuideNote 可以引用同一 document_key 的历史快照。后续登记新快�
 ```
 
 省略字段保持原值；paragraphs 和 related 提供时整体替换。`related=[]`、`paragraphs=[]`、同时 related 与 clear_related、未知字段和空文字都会原子拒绝。提交与当前值相同的更新返回 `no_change`，但新成功请求仍按共同协议保存回执并增加 revision。
+
+Place 事实更正前可用 `client context ROOT --handle HANDLE` 查看该 Place 关联的现行 GuideNotes 与 Sources；只更正受影响的说明，不要求扫描全攻略。新事实取代旧事实时，替换相关 Note 的失准表述，保留仍有效段落、来源与精确引用；若旧事实仍有历史价值，应写明其适用时期，不把过时的“当前”断言与新说法并列。未受影响的 Note 和 Source 保持原样。`clear_related` 只解绑说明，不删除 Note；当前无公开 GuideNote 或 Source 彻底删除方法。
 
 从 `read_workspace` 或 export 读回的 citation 是导出形状，不能把其中的 `source_ref`、`excerpt`、`locator`、`snapshot_sha256` 原样作为更新请求。整体替换 paragraphs 时，先用 read 中的对象 handle 和 `source_imports` 重建调用形状：普通引用写 `{"source": source_handle}`；精确引用按原 citation 的 Source 身份找到对应 snapshot，再写 `{"anchor": {"source": snapshot["source"], "start": start, "end": end, "exact_text": snapshot["text"][start:end]}}`。保留历史引用时必须继续指向同一 snapshot，不能因为已有更新版本就擅自换成最新 snapshot。
 

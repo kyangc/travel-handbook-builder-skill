@@ -6,6 +6,7 @@ from pathlib import Path
 import tempfile
 
 from . import core
+from .client import ManagedHandbook
 from scripts.validate_trip import load_json
 
 
@@ -45,6 +46,27 @@ def write_json(path, value, *, replace):
             temporary.unlink(missing_ok=True)
 
 
+def add_read_options(command):
+    command.add_argument('--day')
+    command.add_argument('--type', dest='types', action='append')
+    command.add_argument('--handle', dest='handles', action='append')
+    command.add_argument('--limit', type=int)
+    command.add_argument('--cursor')
+    command.add_argument('--include-source-text', action='store_true')
+
+
+def read_options(args):
+    selection = {}
+    for name in ('day', 'types', 'handles'):
+        value = getattr(args, name)
+        if value is not None:
+            selection[name] = value
+    local = bool(selection or args.limit is not None or args.cursor is not None
+                 or args.include_source_text)
+    return {'selection': selection if local else None, 'limit': args.limit,
+            'cursor': args.cursor, 'include_source_text': args.include_source_text}
+
+
 def parser():
     result = Parser(description='Local travel authoring prototype. Use one writer per state file.')
     commands = result.add_subparsers(dest='command', required=True, parser_class=Parser)
@@ -57,12 +79,7 @@ def parser():
     import_command.add_argument('state', type=Path)
     read = commands.add_parser('read')
     read.add_argument('state', type=Path)
-    read.add_argument('--day')
-    read.add_argument('--type', dest='types', action='append')
-    read.add_argument('--handle', dest='handles', action='append')
-    read.add_argument('--limit', type=int)
-    read.add_argument('--cursor')
-    read.add_argument('--include-source-text', action='store_true')
+    add_read_options(read)
     check = commands.add_parser('check')
     check.add_argument('state', type=Path)
     apply = commands.add_parser('apply')
@@ -75,6 +92,36 @@ def parser():
     export.add_argument('state', type=Path)
     export.add_argument('output', type=Path)
     export.add_argument('--revision', type=int, required=True)
+    client = commands.add_parser('client')
+    client_commands = client.add_subparsers(
+        dest='client_command', required=True, parser_class=Parser)
+    client_init = client_commands.add_parser('init')
+    client_init.add_argument('root', type=Path)
+    client_source = client_init.add_mutually_exclusive_group(required=True)
+    client_source.add_argument('--state', type=Path)
+    client_source.add_argument('--package', type=Path)
+    client_context = client_commands.add_parser('context')
+    client_context.add_argument('root', type=Path)
+    client_target = client_context.add_mutually_exclusive_group(required=True)
+    client_target.add_argument('--handle')
+    client_target.add_argument('--name')
+    client_context.add_argument('--source-text', dest='source_text_handles', action='append')
+    client_read = client_commands.add_parser('read')
+    client_read.add_argument('root', type=Path)
+    add_read_options(client_read)
+    client_check = client_commands.add_parser('check')
+    client_check.add_argument('root', type=Path)
+    client_prepare = client_commands.add_parser('prepare-place')
+    client_prepare.add_argument('root', type=Path)
+    client_prepare.add_argument('edit', type=Path)
+    client_prepare_request = client_commands.add_parser('prepare-request')
+    client_prepare_request.add_argument('root', type=Path)
+    client_prepare_request.add_argument('request', type=Path)
+    client_commit = client_commands.add_parser('commit')
+    client_commit.add_argument('root', type=Path)
+    client_commit.add_argument('operation_id')
+    client_status = client_commands.add_parser('status')
+    client_status.add_argument('root', type=Path)
     return result
 
 
@@ -90,21 +137,38 @@ def execute(args):
         return {'imported': True, 'state': str(args.state),
                 'workspace_id': state['workspace_id'], 'revision': state['revision'],
                 'import_report': state['import_report']}, 0
+    if args.command == 'client':
+        if args.client_command == 'init':
+            if args.state is not None:
+                book = ManagedHandbook.initialize(args.root, state=read_json(args.state))
+            else:
+                book = ManagedHandbook.initialize(args.root, package=read_json(args.package))
+            return book.status(), 0
+        book = ManagedHandbook.open(args.root)
+        if args.client_command == 'read':
+            return book.read(**read_options(args)), 0
+        if args.client_command == 'check':
+            result = book.check()
+            return result, 0 if result['report']['valid'] else 1
+        if args.client_command == 'context':
+            target = {'handle': args.handle} if args.handle is not None else {'name': args.name}
+            return book.place_context(
+                target=target, source_text_handles=args.source_text_handles), 0
+        if args.client_command == 'prepare-place':
+            result = book.prepare_place_enrichment(read_json(args.edit))
+            return result, 0 if result.get('status') in {'prepared', 'no_change'} else 2
+        if args.client_command == 'prepare-request':
+            return book.prepare_request(read_json(args.request)), 0
+        if args.client_command == 'commit':
+            result = book.commit(args.operation_id)
+            return result, 0 if result.get('publish_status') == 'current' else 3
+        return book.status(), 0
 
     # Resolve an existing state symlink consistently for reading and replacement.
     state_path = args.state.resolve()
     state = read_json(state_path)
     if args.command == 'read':
-        selection = {}
-        for name in ('day', 'types', 'handles'):
-            value = getattr(args, name)
-            if value is not None:
-                selection[name] = value
-        local = bool(selection or args.limit is not None or args.cursor is not None
-                     or args.include_source_text)
-        return core.read_workspace(
-            state, selection=selection if local else None, limit=args.limit,
-            cursor=args.cursor, include_source_text=args.include_source_text), 0
+        return core.read_workspace(state, **read_options(args)), 0
     if args.command == 'check':
         report = core.check(state)
         return report, 0 if report['valid'] else 1

@@ -6,6 +6,25 @@
 
 目前没有尚未发布的变化。
 
+## [0.2.0] - 2026-09-25
+
+### Added
+
+- 受管理攻略续作：`client init/read/context/prepare-request/prepare-place/commit/check/status` 在同一目录保存完整 state、请求记录与稳定 canonical；完成后仍可由新会话读取并继续更正。
+- 独立的 owned `preview-service`：启动、核对和停止同一 managed ROOT 的本地预览；合法提交后可在原 URL 刷新最新数据。
+- 扩展的公开 Task、Stay、Trip 摘要与 Media 方法及按需指南；已完成 Task 的清单更正保留原完成事实与历史，图片记录与用途不冒充网页显示。
+
+### Changed
+
+- Skill 入口更明确地区分公开读/写、来源与用户决定、数据级预览和页面目视证据；普通旅客答复默认先交代实际结果、重要未知与可用预览，不必罗列内部 ID。
+- 默认发布构建版本升为 0.2.0。公开调用仍以当前 bundle 的方法清单、manifest 与 Schema 为准；本版未增加自动选行程、预订、支付或公开发布能力。
+
+### Compatibility and validation
+
+- 继续使用 `1.0` schema profile；含新增可选字段的 0.2.0 包可能被旧版严格 `1.0` 校验器拒绝，保留产物对应的 bundle 版本。
+- 发布候选须通过确定性构建、manifest/ZIP 完整性与隐私检查、公开 CLI/运行环境检查及受影响回归。此前不同候选上的外部 Agent 单例是有限参考，不替代本版 release asset 的验收。
+- 本次不以 0.1.0 文档中的 Kimi 多场景集冒充 0.2.0 已通过；发布后将另用新会话 Codex 和用户提供的旧行程 Markdown 检查真实重建，结果与缺口届时单列。
+
 ## [0.1.0] - 2026-09-20
 
 首个公开版本。
@@ -35,5 +54,6 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.1.0
