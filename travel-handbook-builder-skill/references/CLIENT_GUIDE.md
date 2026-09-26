@@ -1,6 +1,6 @@
 # 受管理攻略续作客户端
 
-`authoring.client.ManagedHandbook` 接管同一新目录中的完整 state、request journal、preview/commit 和稳定 canonical 发布。常见单 Place 无覆盖补充使用 `context`/`prepare-place`；其他当前公开写方法使用只读 `client read` 后，按既有专业指南构造公开 authoring request，再交给 `prepare-request`。这不是新的领域编辑器：客户端不联网、不选择事实、不包装各个底层方法。`read.capabilities.write_methods` 才是当下可调用方法清单。
+`authoring.client.ManagedHandbook` 接管同一新目录中的完整 state、request journal、preview/commit 和稳定 canonical 发布。单 Place 单字段非覆盖补充使用 `context`/`prepare-place`；同源多字段或多 Place 补充优先使用 `prepare-request`，批量来源与 Note 去重见[内容指南](CONTENT_COLLECTION_GUIDE.md#把资料写回正确对象)。其他当前公开写方法使用只读 `client read` 后，按既有专业指南构造公开 authoring request，再交给 `prepare-request`。这不是新的领域编辑器：客户端不联网、不选择事实、不包装各个底层方法。`read.capabilities.write_methods` 才是当下可调用方法清单。
 
 ## 快速开始
 
@@ -25,6 +25,8 @@ scripts/travel-handbook client check \
 
 `context` 支持 `--name NAME` 或 `--handle HANDLE`；即使已知 Place handle，补充或纠错前也可用它取得该 Place、`related_guide_notes`、`related_items`（含当前 Day/退役归属）、`related_issues`、`sources` 和当前 revision。它会追完各类型分页，只返回与此 Place 直接关联的对象；名称重复时返回候选而不猜测第一个。`association_review.needed` 提示这些对象可能含随安排变化的文字判断，**不是**自动判定文字已过时；Item 撤下或改期后，调用方用这份有界关联集合复核 Note 与 Issue，按事实需要显式更新或保留，不自动改写、解决或删除。该集合不是全工作区反向依赖图，也不扫描自由文字寻找暗含关联。窄补充须用其 Place handle 和 revision。其他对象仍用 `client read`，它直接复用公开 `read` 的 `--day`、`--type`、`--handle`、`--limit`、`--cursor`、`--include-source-text`，返回当前 revision、handles、分页与 live capabilities；Source 原文需要显式 Source handle。不要读或直接改管理目录中的 state、journal、canonical。
 
+`--type` 使用模型对象名，不是写方法名：例如 `service.record` 创建的对象用 `client read ROOT --type transport_service`，不是 `--type service`；Trip、Item、Task 分别用 `trip`、`item`、`task`。完整可读类型以当前 `read` 选择器和 live capabilities 为准。
+
 `client check ROOT`（Python：`ManagedHandbook.open(ROOT).check()`）只读返回 `state_revision`、`canonical_revision`、`publish_status` 和 `report`。`report` 是同一当前完整 state 的公开 `check(state)` 完整报告，包括 `availability_assessments`；没有选择、分页或自动发布。`publish_status=stale` 表示 canonical/网页仍落后，即使 `report.valid=true`，本命令仍以校验成功的退出码 0 返回；调用方须单独核对发布状态，不能把当前 state 的诊断说成旧网页已展示的内容。无效目录或内部 state/canonical 沿用结构化错误与非零退出。读取不会改动 state、canonical、report 或 journal；package-only 的当前导入 state 可诊断，但缺失的旧作者元数据不会恢复。
 
 保存一个窄补充 intent：
@@ -48,13 +50,13 @@ scripts/travel-handbook client check \
     }
   },
   "guide_note": {
-    "title": "到访条件与来源",
-    "text": "2031-11-01 至 2032-03-31，社区录音活动期间可能临时关闭；到访当天需复核。"
+    "title": "到访条件来源",
+    "text": "到访条件依据所引资料。"
   }
 }
 ```
 
-GuideNote 只写有来源支持的地点事实、适用期及必要的现实到访条件；不要把“这次改了什么／没改什么”等操作范围或当前日程复制进地点说明。操作范围写在答复或工作记录中，实际安排仍从 Day/Item 读取。
+GuideNote 只补必要出处或尚未在 Place 表达的有据说明，不复述已写入 `cautions` 等字段的适用期、临时关闭和复核条件；不要把“这次改了什么／没改什么”等操作范围或当前日程复制进地点说明。操作范围写在答复或工作记录中，实际安排仍从 Day/Item 读取。
 
 ```sh
 scripts/travel-handbook client prepare-place \
@@ -117,6 +119,7 @@ scripts/travel-handbook client prepare-request \
 ## 幂等、恢复与发布
 
 - 同 request ID + 完全相同 intent 找回同一 operation；同 ID + 不同 intent 返回 `REQUEST_ID_REUSED`，其中 `recovery.action=new_request_id_for_changed_intent` 指示更正后的**新意图**另用新 ID，原 operation 的审计记录不改写。managed preview 失败时保留原 `code`/`op_index`，另返回 `recovery.action=correct_intent_with_new_request_id`；完全相同的原意图可沿用原 ID 重试。普通非 managed `preview` 不附加这层恢复信息。
+- 两种恢复不要混用：更改标题、目标或其他请求载荷是**新意图**，读取当前 revision 并换新 request ID 后重新 prepare；同一提交的响应不明或发布失败是**同一意图**，只重试原 operation ID，不新造请求。
 - 窄/专业入口共用 request ID 命名空间；已在输入 full state 成功提交、但不在 managed journal 的旧 ID 不会伪装成新 operation。专业入口仍须保留本次原 request 供失败诊断；不能从 receipt 反推请求。
 - prepare 先保存 intent 和精确 request bytes，再 preview。commit 只接收 operation ID，且每次重算 request hash。
 - 响应丢失时重提同 operation ID。底层 receipt 会恢复精确重放，不重复 Place 值、Source 或 GuideNote。

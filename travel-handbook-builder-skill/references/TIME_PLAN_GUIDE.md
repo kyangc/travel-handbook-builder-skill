@@ -8,6 +8,8 @@
 
 `plan.add(..., timing=...)`、`plan.update(target, set={"timing": ...})`、`journey.compose(..., timing=...)` 和 `route.compose(..., timing=...)` 共用同一封闭输入。所有 ZonedDateTime 都必须显式提供当地日期时间和 IANA 时区；跨时区端点分别写自己的时区。
 
+对已选游览 Item，先复用它已有的起止边界；两端足够明确时，本次停留时长由该时段得出，不再另写一个会漂移的数字。只知道本次预计停留长度时，可用 `timing={"kind":"boundaries","start":{"kind":"unknown"},"duration":{"min_minutes":60,"max_minutes":90}}` 这样的受支持形式保留未知起点，不为凑时长发明开始或结束时刻；通用的 `Place.content.duration_advice` 不能替代本次安排。相邻活动之间的时间差可能包含用餐、排队或自由活动，不能据此推算交通时长。
+
 只知道明确结束时，可使用 end-only；工具不会补开始、午夜或零时长：
 
 ```python

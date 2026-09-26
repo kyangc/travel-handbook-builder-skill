@@ -348,10 +348,26 @@ def plan_withdraw(editor, *, target, reason):
     return editor.handle(target)
 
 
-def day_update(editor, *, target, date=None, timezone=None):
+def day_update(editor, *, target, date=None, timezone=None, set=None, clear=None):
     require_edit_version(editor)
-    if date is None and timezone is None:
-        fail('INVALID_ARGUMENT', 'Provide date, timezone, or both')
+    from .core import edit_fields
+    changes = {} if set is None else copy.deepcopy(set)
+    clear_fields = [] if clear is None else copy.deepcopy(clear)
+    if (not isinstance(changes, dict) or not isinstance(clear_fields, list)
+            or not all(isinstance(field, str) for field in clear_fields)):
+        fail('INVALID_ARGUMENT', 'set must be an object and clear a list of field names')
+    if date is None and timezone is None and not changes and not clear_fields:
+        fail('INVALID_ARGUMENT', 'Provide a calendar or descriptive Day change')
+    if isinstance(changes, dict):
+        for field in ('title', 'summary'):
+            if field in changes:
+                nonempty(changes[field], f'set.{field}')
+    if changes or clear_fields:
+        # Validate the descriptive edit before any calendar checks or mutation.
+        candidate = {}
+        edit_fields(candidate, changes=changes, clear=clear_fields,
+                    append_note=None, allowed={'title', 'summary'},
+                    clearable={'title', 'summary'})
     day_ref = editor.ref(target, {'day'})
     day = editor.record(target, {'day'})
     proposed = {
@@ -364,27 +380,33 @@ def day_update(editor, *, target, date=None, timezone=None):
                 'timezone': day['timezone']}
     changed = [name for name in ('date', 'timezone')
                if proposed[name] != previous[name]]
-    if not changed:
+    if not changed and not changes and not clear_fields:
         return editor.handle(target)
-    _protect_day_claim_changes(
-        editor.package, day_ref, previous, proposed, changed)
-    items = {value['id']: value for value in editor.package.get('items', [])}
-    for item_ref in day.get('item_refs', []):
-        item = items.get(item_ref['id'])
-        if item is None or item.get('lifecycle', 'current') != 'current':
-            fail('STATE_FORMAT', 'Day owns a missing or retired Item')
-        if item.get('kind') == 'stay_action':
-            from .stays import validate_stay_action_day
-            validate_stay_action_day(editor.package, item, proposed,
-                                     parameter=changed[0])
-        _protect_calendar_change(editor.package, item, item_ref, previous, proposed,
-                                 changed[0])
+    if changed:
+        _protect_day_claim_changes(
+            editor.package, day_ref, previous, proposed, changed)
+        items = {value['id']: value for value in editor.package.get('items', [])}
+        for item_ref in day.get('item_refs', []):
+            item = items.get(item_ref['id'])
+            if item is None or item.get('lifecycle', 'current') != 'current':
+                fail('STATE_FORMAT', 'Day owns a missing or retired Item')
+            if item.get('kind') == 'stay_action':
+                from .stays import validate_stay_action_day
+                validate_stay_action_day(editor.package, item, proposed,
+                                         parameter=changed[0])
+            _protect_calendar_change(editor.package, item, item_ref, previous, proposed,
+                                     changed[0])
     if date is not None:
         day['date'] = proposed['date']
     if timezone is not None:
         day['timezone'] = proposed['timezone']
-    editor.parts['calendar_change'] = {
-        'before': previous, 'after': proposed, 'changed_fields': changed}
+    if changes or clear_fields:
+        edit_fields(day, changes=changes, clear=clear_fields,
+                    append_note=None, allowed={'title', 'summary'},
+                    clearable={'title', 'summary'})
+    if changed:
+        editor.parts['calendar_change'] = {
+            'before': previous, 'after': proposed, 'changed_fields': changed}
     return editor.handle(target)
 
 
@@ -417,15 +439,19 @@ def trip_change_dates(editor, *, start_date=None, end_date=None):
 
 
 def trip_update(editor, *, set=None, clear=None):
-    """Edit the one public descriptive Trip field without widening calendar edits."""
+    """Edit Trip title or summary without widening calendar edits."""
     require_edit_version(editor)
     from .core import edit_fields
     changes = {} if set is None else copy.deepcopy(set)
     clear_fields = [] if clear is None else copy.deepcopy(clear)
-    if isinstance(changes, dict) and 'summary' in changes:
-        nonempty(changes['summary'], 'set.summary')
+    if isinstance(changes, dict):
+        for field in ('title', 'summary'):
+            if field in changes:
+                nonempty(changes[field], f'set.{field}')
     edit_fields(editor.package['trip'], changes=changes, clear=clear_fields,
-                append_note=None, allowed={'summary'}, clearable={'summary'})
+                append_note=None, allowed={'title', 'summary'}, clearable={'summary'})
+    if 'title' in changes:
+        editor.state['title'] = changes['title']
     trip_ref = {'type': 'trip', 'id': editor.package['trip']['id']}
     handle = next((value for value, ref in editor.state['handles'].items()
                    if ref == trip_ref), None)

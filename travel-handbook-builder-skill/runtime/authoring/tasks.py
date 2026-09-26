@@ -9,6 +9,10 @@ CATEGORIES = {
     'documents', 'clothing', 'health_supplies', 'connectivity',
     'equipment', 'booking', 'verification', 'other',
 }
+ACTIONS = {
+    'pack', 'obtain', 'purchase', 'install', 'activate', 'verify',
+    'reserve', 'return', 'cancel', 'pay', 'other',
+}
 CHECKLIST_STATUSES = {'open', 'done', 'not_needed'}
 SNAPSHOT_FIELDS = (
     'title', 'action', 'target_refs', 'category', 'assignees',
@@ -16,9 +20,38 @@ SNAPSHOT_FIELDS = (
 )
 
 
+def target_refs(editor, values, parameter='targets', *, require_current_items=False):
+    if not isinstance(values, list) or not values:
+        fail('INVALID_ARGUMENT', 'targets must be a nonempty list', parameter=parameter)
+    refs = []
+    for index, value in enumerate(values):
+        ref = editor.ref(value)
+        allowed_types = {'trip', 'item', 'stay'}
+        if editor.package.get('schema_version') == '1.0':
+            allowed_types.add('issue')
+        if not (ref.get('type') in allowed_types or
+                (ref.get('kind') == 'unit' and ref.get('owner', {}).get('type') == 'stay')):
+            fail('REFERENCE_KIND_MISMATCH',
+                 'Task targets must be Trip, Item, Stay, a Stay Unit, or an Issue',
+                 reference=value, parameter=f'{parameter}[{index}]')
+        if (require_current_items and ref.get('type') == 'item'
+                and editor.record(value, {'item'}).get('lifecycle', 'current') != 'current'):
+            fail('TASK_TARGET_RETIRED', 'A replacement Task Item target must be current',
+                 reference=value, parameter=f'{parameter}[{index}]')
+        refs.append(ref)
+    return refs
+
+
 def normalize_category(value, parameter='category'):
     if not isinstance(value, str) or value not in CATEGORIES:
         fail('INVALID_ARGUMENT', 'category is not a supported Task category',
+             parameter=parameter)
+    return value
+
+
+def normalize_action(value, parameter='action'):
+    if not isinstance(value, str) or value not in ACTIONS:
+        fail('INVALID_ARGUMENT', 'action is not a supported Task action',
              parameter=parameter)
     return value
 
@@ -179,4 +212,32 @@ def task_reopen(editor, *, target, reason, reopened_at=None):
     task.setdefault('completion_history', []).append(history)
     task['status'] = 'open'
     del task['completion']
+    return editor.handle(target)
+
+
+def task_retire(editor, *, target, reason):
+    """Mark one explicitly selected open Task no longer needed, retaining its history."""
+    if editor.package.get('schema_version') != '1.0':
+        fail('SCHEMA_VERSION_UNSUPPORTED', 'task.retire requires 1.0')
+    nonempty(reason, 'reason')
+    task_ref = editor.ref(target, {'task'})
+    task = editor.record(target, {'task'})
+    if task['status'] != 'open':
+        fail('TASK_NOT_OPEN', 'Only an open Task can be retired')
+    review_refs = []
+    for other in editor.package.get('tasks', []):
+        if task_ref in other.get('depends_on', []):
+            review_refs.append({'type': 'task', 'id': other['id']})
+    for note in editor.package.get('guide_notes', []):
+        if task_ref in note.get('related_refs', []):
+            review_refs.append({'type': 'guide_note', 'id': note['id']})
+    for issue in editor.package.get('issues', []):
+        if issue.get('task_ref') == task_ref:
+            review_refs.append({'type': 'issue', 'id': issue['id']})
+    for claim in editor.package.get('claims', []):
+        if claim.get('target', {}).get('object_ref') == task_ref:
+            review_refs.append({'type': 'claim', 'id': claim['id']})
+    task['status'] = 'not_needed'
+    task['retirement'] = {'reason': reason}
+    editor.parts['review_refs'] = review_refs
     return editor.handle(target)

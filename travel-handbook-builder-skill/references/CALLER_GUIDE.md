@@ -66,7 +66,7 @@ day = receipt["aliases"]["day"]
 {"method": "place.update", "args": {"target": meeting, "clear": ["roles"]}}
 ```
 
-set.roles 替换完整角色集合，省略 roles 保留旧值；clear.roles 表示撤回已记录分类，地点身份、链接及行程引用保持。restaurant 在创建和更新中都规范为 dining。空列表、null、未知枚举及规范后重复均拒绝。如果已有分类专属资料与新角色不一致，修改会拒绝，不悄悄删资料；当前快捷入口尚不编辑 role_details。
+set.roles 替换完整角色集合，省略 roles 保留旧值；clear.roles 表示撤回已记录分类，地点身份、链接及行程引用保持。restaurant 在创建和更新中都规范为 dining。空列表、null、未知枚举及规范后重复均拒绝。如果已有分类专属资料与新角色不一致，修改会拒绝，不悄悄删资料。`place.add` 可传角色匹配的 `role_details`，`place.update.set.role_details` 整体替换角色资料，更新前须公开读回并保留未改的兄弟字段；清除合同见[方法清单](README.md)，酒店入住起始时间的写法见[住宿指南](STAY_GUIDE.md)。受管理目录通过 `client prepare-request`/`commit` 传送这些公开操作；`client prepare-place` 的加法白名单仍不支持 `role_details`，不能把窄入口的限制误当成公开 `place.update` 不支持。
 
 `read_workspace` 返回当前 `schema_version`，尚未定义旅行时为 null。新建 Trip 使用稳定数据契约 1.0；不要手工修改版本字段。
 
@@ -194,6 +194,8 @@ closed_dates 只新增绝对关闭区间：该当地日期 00:00 至下一日期
 
 移动已有 Item 使用 `plan.move(target, day, before?)`，撤下使用 `plan.withdraw(target, reason)`；不要以新建副本或手改 Day.item_refs 替代。跨日不会自动改固定时刻、班次、住宿、Task 截止或 Coverage 有效期；warning、执行事实 blocker、review refs 与 Trip 范围复核见[安排编辑指南](ARRANGEMENT_EDIT_GUIDE.md)。
 
+把已选的同一次普通 Visit 细化为多途经点路线，用 `route.bind_visit` 指定原 Visit 和对应原 Place 的 `source_stop_key`，原 Item 身份、Day 序位与整体时间保留；不要 `route.compose` 出第二个 Item。它不按同名或同 Place 合并安排，也不合并已经并存的 Route+Visit。输入、回执和保护边界见[路线输入指南](MOVEMENT_GUIDE.md#已有-visit-原位细化为-route)。
+
 明确改乘现有 Journey 的一个 Leg 使用 `journey.replace_leg`；替换 Route 中两个既有 Stop 之间的区间使用 `route.replace_interval`。两者都创建新的被替换执行身份，要求调用方完整给出相邻 Connection 或区间 Segment，不继承旧班次、路径、耗时或票券事实。旧片段有任何仍须解析的 Task、Claim、Coverage、Cost、GuideNote 或活来源字段 binding 时会原子拒绝；具体输入与 removed/kept/created 回执见[安排编辑指南](ARRANGEMENT_EDIT_GUIDE.md)。
 
 若来源只命名一个具体核实对象而不能定位到 Route Segment，先建 Place，再用 `issue.record` 建立问题、让 Task 指向 Issue；核实完成后分别 `task.complete` 与带 origin 的 `issue.resolve`。不要把 Place 猜成 Route Stop，也不要把已有 whole-Item Task 自动改挂。完整例子、单调解决及诊断见[Issue指南](ISSUE_GUIDE.md)。
@@ -205,9 +207,10 @@ closed_dates 只新增绝对关闭区间：该当地日期 00:00 至下一日期
 {"method": "plan.update", "args": {"target": lunch, "set": {"timing": {"kind": "estimated", "start": {"local": "2026-10-05T12:30:00", "timezone": "Asia/Tokyo"}}}}}
 {"method": "task.amend", "args": {"target": task, "append_note": "留意是否有预约截止时间。"}}
 {"method": "task.amend", "args": {"target": task, "clear": ["notes"]}}
+{"method": "task.retire", "args": {"target": task, "reason": "明确确认此任务不再需要"}}
 ```
 
-完成说明/时间只取明确输入。修改或清空 notes 不会重开任务或删除完成事实。可以 `place.update(set={"content": {"summary": "原文介绍"}})` 补介绍。set 整体替换对应字段，不做嵌套自动合并；省略其他字段即保留。
+完成说明/时间只取明确输入。`task.retire` 只适用于仍 open 的 Task，理由必填；它将状态标为 not_needed，不代表已经完成，done 须先显式重开并保存完成历史。修改或清空 notes 不会重开任务或删除完成事实。可以 `place.update(set={"content": {"summary": "原文介绍"}})` 补介绍。set 整体替换对应字段，不做嵌套自动合并；省略其他字段即保留。
 
 护照核验/装包、购买/装包、Wi-Fi 领取/归还等基础准备可显式保存 category、preparation、depends_on 与 checklist。数量单位成组校验、清单工作区 handle、open 清单完成门禁、open 依赖提示和 1.0 完成历史见[基础准备待办指南](TASK_PREPARATION_GUIDE.md)。工具不会从一句“准备物品”自动拆成购买和装包，也不接受用人数冒充负责人。
 

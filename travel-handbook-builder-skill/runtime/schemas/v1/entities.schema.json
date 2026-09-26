@@ -512,6 +512,13 @@
         "lodging": {
           "type": "object",
           "properties": {
+            "check_in_time": {
+              "type": "string",
+              "minLength": 5,
+              "maxLength": 5,
+              "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$",
+              "description": "Hotel-local check-in start time. Omit when unknown; not inferred from check_in_rule or Trip timezone."
+            },
             "check_in_rule": {
               "type": "string",
               "minLength": 1
@@ -1170,6 +1177,12 @@
         "role": {
           "type": "string",
           "minLength": 1
+        },
+        "encounter_kind": {
+          "enum": [
+            "visit",
+            "pass_through"
+          ]
         },
         "purpose": {
           "type": "string",

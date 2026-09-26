@@ -315,6 +315,32 @@ def item_day_ownership_assessment(package, item_ref, day, resolver=None):
     }
 
 
+def _untimed_stay_action_has_known_day(package, item, day):
+    """An entirely untimed stay action has no clock boundary to cross-check."""
+    timing = item.get('timing')
+    if (item.get('kind') != 'stay_action' or not isinstance(timing, dict)
+            or timing.get('kind') != 'unknown' or set(timing) - {'kind', 'notes'}):
+        return False
+    ref = item.get('subject_ref')
+    if not isinstance(ref, dict) or ref.get('type') != 'stay':
+        return False
+    stay = next((value for value in package.get('stays', [])
+                 if value.get('id') == ref.get('id')), None)
+    if stay is None or stay.get('use_kind') != 'overnight':
+        return False
+    period = stay.get('period', {})
+    if period.get('kind') != 'local_dates' or day.get('timezone') != period.get('timezone'):
+        return False
+    day_date = day.get('date')
+    check_in, check_out = period.get('check_in'), period.get('check_out')
+    if not all(isinstance(value, str) for value in (day_date, check_in, check_out)):
+        return False
+    if not check_in <= day_date <= check_out:
+        return False
+    expected = {'check_in': check_in, 'check_out': check_out}.get(item.get('action'))
+    return expected is None or day_date == expected
+
+
 def time_diagnostics(package):
     """Return path-specific semantic errors for all explicit ZonedDateTimes."""
     errors = []
@@ -394,6 +420,8 @@ def time_diagnostics(package):
         assessment = item_day_ownership_assessment(
             package, item_ref, day, resolver=resolver)
         if assessment['status'] == 'unknown':
+            if _untimed_stay_action_has_known_day(package, item, day):
+                continue
             warnings.append({
                 'code': 'TIME_DAY_OWNERSHIP_UNKNOWN',
                 'path': f'/items/{index}/timing',

@@ -17,6 +17,7 @@ from .source_topology import (
 )
 
 MISSING_PURPOSE = '本次游览目的未记录'
+ENCOUNTER_KINDS = {'visit', 'pass_through'}
 
 
 def shape(value, required, optional, parameter):
@@ -39,17 +40,24 @@ def optional_text(source, destination, field, parameter):
         destination[field] = source[field]
 
 
+def encounter_kind(value, parameter):
+    if not isinstance(value, str) or value not in ENCOUNTER_KINDS:
+        fail('INVALID_ARGUMENT', 'encounter_kind must be visit or pass_through', parameter=parameter)
+    return value
+
+
 def missing_purpose(editor, handle):
     editor.parts.setdefault('missing_facts', []).append({
         'target': handle, 'field': 'purpose', 'reason': 'not_provided'})
 
 
-def route_compose(editor, *, day, title, stops, segments, participants=None,
-                  timing=None, source_adoption=None):
+def _build_route(editor, *, day, title, stops, segments, participants=None,
+                 timing=None, source_adoption=None, existing_item=None):
     if source_adoption is not None:
         require_execution_edit_version(editor)
     nonempty(title, 'title')
-    editor.record(day, {'day'})
+    if existing_item is None:
+        editor.record(day, {'day'})
     if not isinstance(stops, list) or len(stops) < 2:
         fail('INVALID_ARGUMENT', 'A route needs at least two stop occurrences', parameter='stops')
     if not isinstance(segments, list) or len(segments) != len(stops) - 1:
@@ -60,7 +68,8 @@ def route_compose(editor, *, day, title, stops, segments, participants=None,
     origins = []
     for index, value in enumerate(stops):
         parameter = f'stops[{index}]'
-        shape(value, {'key', 'place'}, {'purpose', 'dwell_minutes', 'notes'}, parameter)
+        shape(value, {'key', 'place'},
+              {'purpose', 'dwell_minutes', 'notes', 'encounter_kind'}, parameter)
         key = value['key']
         nonempty(key, parameter + '.key')
         if key in stop_keys:
@@ -74,6 +83,9 @@ def route_compose(editor, *, day, title, stops, segments, participants=None,
         else:
             missing_keys.append(key)
         optional_text(value, record, 'notes', parameter)
+        if 'encounter_kind' in value:
+            record['encounter_kind'] = encounter_kind(
+                value['encounter_kind'], parameter + '.encounter_kind')
         if 'dwell_minutes' in value:
             record['dwell'], origin = duration_input(value['dwell_minutes'], parameter + '.dwell_minutes')
             if origin is not None:
@@ -161,7 +173,15 @@ def route_compose(editor, *, day, title, stops, segments, participants=None,
         if set(timing) - {'kind', 'notes', 'constraints'}:
             fail('INVALID_ARGUMENT', 'Derived Route timing accepts kind, notes and constraints only', parameter='timing')
         item_timing = normalize_time_plan(editor, {**timing, 'from_ref': editor.ref(route)})
-    primary = editor.create_arrangement(day, title, 'route', route, participants=participants, timing=item_timing)
+    if existing_item is None:
+        primary = editor.create_arrangement(
+            day, title, 'route', route, participants=participants, timing=item_timing)
+    else:
+        primary = editor.handle(existing_item)
+        item = editor.record(primary, {'item'})
+        item['kind'] = 'route'
+        item['subject_ref'] = editor.ref(route)
+        item.pop('place_ref', None)
     owner = editor.ref(route)
     stop_handles = {key: editor.register_local(owner, 'stop', record)
                     for key, record in stop_keys.items()}
@@ -181,6 +201,94 @@ def route_compose(editor, *, day, title, stops, segments, participants=None,
         editor, source_context, item_handle=primary, route_ref=owner,
         stop_handles=stop_handles, segment_handles=segment_handles,
         leg_handles=leg_keys)
+    return primary
+
+
+def route_compose(editor, *, day, title, stops, segments, participants=None,
+                  timing=None, source_adoption=None):
+    return _build_route(editor, day=day, title=title, stops=stops,
+                        segments=segments, participants=participants,
+                        timing=timing, source_adoption=source_adoption)
+
+
+def _bind_visit_blockers(editor, item_ref):
+    changed_fields = {'kind', 'place_ref', 'subject_ref'}
+    blockers = []
+    imports = editor.state.get('source_imports') or {}
+    for binding in imports.get('field_bindings', {}).values():
+        if (binding.get('target_ref') == item_ref
+                and binding.get('aspect') == 'item.place_ref'):
+            blockers.append({'kind': 'source_field_binding',
+                             'binding_id': binding['id'], 'field': 'place_ref',
+                             'document_key': binding.get('document_key'),
+                             'identity_id': binding.get('identity_id')})
+    for claim in editor.package.get('claims', []):
+        target = claim.get('target', {})
+        if (target.get('object_ref') == item_ref
+                and 'local_ref' not in target
+                and target.get('field') in changed_fields
+                and claim.get('disposition', 'adopted') == 'adopted'):
+            blockers.append({'kind': 'claim',
+                             'ref': {'type': 'claim', 'id': claim['id']},
+                             'field': target['field']})
+    return blockers
+
+
+def _bind_visit_review_refs(package, item_ref):
+    refs = []
+    for collection, kind, field in (
+            ('guide_notes', 'guide_note', 'related_refs'),
+            ('issues', 'issue', 'target_refs'),
+            ('reservations', 'reservation', 'target_refs'),
+            ('costs', 'cost', 'target_refs')):
+        for record in package.get(collection, []):
+            if item_ref in record.get(field, []):
+                refs.append({'type': kind, 'id': record['id']})
+    return refs
+
+
+def route_bind_visit(editor, *, target, stops, segments, source_stop_key,
+                     reason, route_title=None):
+    """Refine one explicit current Visit in place; never infer a duplicate Item."""
+    require_execution_edit_version(editor)
+    nonempty(reason, 'reason')
+    nonempty(source_stop_key, 'source_stop_key')
+    item_ref = editor.ref(target, {'item'})
+    item = editor.record(target, {'item'})
+    if item.get('lifecycle', 'current') != 'current':
+        fail('ROUTE_BIND_TARGET_RETIRED', 'Only a current Visit can be bound',
+             parameter='target')
+    if item.get('kind') != 'visit':
+        fail('REFERENCE_KIND_MISMATCH', 'Target must be an ordinary Visit',
+             parameter='target')
+    old_place = item.get('place_ref')
+    if old_place is None:
+        fail('ROUTE_BIND_PLACE_REQUIRED', 'Visit needs a known Place for exact Stop mapping',
+             parameter='target')
+    if not isinstance(stops, list):
+        fail('INVALID_ARGUMENT', 'stops must be an array', parameter='stops')
+    matched = [stop for stop in stops if isinstance(stop, dict)
+               and stop.get('key') == source_stop_key]
+    if len(matched) != 1 or editor.ref(matched[0].get('place'), {'place'}) != old_place:
+        fail('ROUTE_BIND_PLACE_MISMATCH',
+             'source_stop_key must identify the original Visit Place exactly',
+             parameter='source_stop_key', original_place_ref=copy.deepcopy(old_place))
+    title = item['title'] if route_title is None else route_title
+    nonempty(title, 'route_title')
+    blockers = _bind_visit_blockers(editor, item_ref)
+    if blockers:
+        fail('ROUTE_BIND_BLOCKED', 'Changed Visit fields have protected evidence',
+             parameter='target', blockers=blockers)
+    preserved = [field for field in ('id', 'title', 'timing', 'participants',
+                                      'purpose', 'notes', 'lifecycle') if field in item]
+    review_refs = _bind_visit_review_refs(editor.package, item_ref)
+    primary = _build_route(editor, day=None, title=title, stops=stops,
+                           segments=segments, existing_item=target)
+    editor.parts.update({'route': handle_for_ref(editor, editor.record(primary)['subject_ref']),
+                         'source_place_ref': copy.deepcopy(old_place),
+                         'source_stop_key': source_stop_key,
+                         'preserved_fields': preserved, 'reason': reason,
+                         'review_refs': review_refs})
     return primary
 
 
@@ -260,7 +368,8 @@ def route_edit(editor, *, target, edits):
         record = editor.record(edit['target'])
         if kind == 'segment' and 'leg_ref' in record:
             fail('UNSUPPORTED_VARIANT', 'This edit only supports inline route segments', parameter=parameter + '.target')
-        allowed = {'purpose', 'dwell_minutes', 'notes'} if kind == 'stop' else {'duration_minutes', 'distance_m', 'path', 'notes'}
+        allowed = ({'purpose', 'dwell_minutes', 'notes', 'encounter_kind'} if kind == 'stop'
+                   else {'duration_minutes', 'distance_m', 'path', 'notes'})
         changes, clear = edit.get('set', {}), edit.get('clear', [])
         if not isinstance(changes, dict) or changes.keys() - allowed:
             fail('FIELD_NOT_EDITABLE', 'set contains unsupported fields', parameter=parameter + '.set')
@@ -281,6 +390,8 @@ def route_edit(editor, *, target, edits):
             if field in ('purpose', 'notes'):
                 nonempty(value, field_path)
                 updated[field] = value
+            elif field == 'encounter_kind':
+                updated[field] = encounter_kind(value, field_path)
             elif field in ('dwell_minutes', 'duration_minutes'):
                 normalized, origin = duration_input(value, field_path)
                 updated[mapping[field]] = normalized

@@ -107,6 +107,8 @@ def read_record(path: Path) -> dict | None:
             or not re.fullmatch(r"[0-9a-f]{32}", record["instance"])
             or record["url"] != f'http://127.0.0.1:{record["port"]}/'):
         raise ServiceError("service record has an invalid shape")
+    if "media_root" in record and type(record["media_root"]) is not str:
+        raise ServiceError("service record has an invalid media root")
     return record
 
 
@@ -125,6 +127,39 @@ def write_record(path: Path, record: dict) -> None:
             os.fsync(directory)
         finally:
             os.close(directory)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def read_map_config(path: Path) -> dict:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return {"asked": False}
+    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid()
+            or metadata.st_mode & 0o077):
+        raise ServiceError("map configuration is not a private, owned regular file")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError) as error:
+        raise ServiceError("map configuration is invalid") from error
+    if (not isinstance(value, dict) or type(value.get("asked")) is not bool
+            or ("key" in value and (type(value["key"]) is not str
+                                    or not re.fullmatch(r"[A-Za-z0-9_-]{20,256}", value["key"])))):
+        raise ServiceError("map configuration has an invalid shape")
+    return value
+
+
+def write_map_config(path: Path, value: dict) -> None:
+    descriptor, name = tempfile.mkstemp(prefix=".maps-", dir=path.parent)
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+            json.dump(value, stream, ensure_ascii=False)
+            stream.write("\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
     finally:
         temporary.unlink(missing_ok=True)
 
@@ -254,11 +289,17 @@ def ready_line(log: Path) -> dict | None:
 
 
 def start(root: Path, control: Path, record_path: Path, requested_port: int | None,
-          allow_new_url: bool) -> dict:
+          allow_new_url: bool, media_root: Path | None) -> dict:
     existing = read_record(record_path)
+    if existing is not None and media_root is None and existing.get("media_root"):
+        media_root = Path(existing["media_root"])
+        if not media_root.is_dir():
+            raise ServiceError("recorded media root is no longer an existing directory")
     current = service_status(root, control, existing)
     if existing is not None:
         if current["state"] == "ready":
+            if (str(media_root) if media_root else None) != existing.get("media_root"):
+                raise ServiceError("media root differs from the existing service; stop it before changing the root")
             if requested_port not in (None, 0, existing["port"]):
                 raise ServiceError("requested port differs from the existing service URL")
             current["reused"] = True
@@ -287,7 +328,10 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
     fd = os.open(log, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     command = [str(SKILL_DIR / "scripts" / "python"),
                str(SKILL_DIR / "scripts" / "preview_server.py"), str(export),
-               "--port", str(port), "--instance-id", instance]
+               "--port", str(port), "--instance-id", instance,
+               "--map-config", str(control / "maps.json")]
+    if media_root is not None:
+        command.extend(["--media-root", str(media_root)])
     child = None
     try:
         with os.fdopen(fd, "wb") as output:
@@ -325,6 +369,8 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
                   "birth": birth, "instance": instance, "port": selected_port,
                   "url": f"http://127.0.0.1:{selected_port}/", "started_at": time.time(),
                   "log": str(log)}
+        if media_root is not None:
+            record["media_root"] = str(media_root)
         manifest = SKILL_DIR / "MANIFEST.json"
         if manifest.is_file():
             record["bundle_version"] = json.loads(manifest.read_text(encoding="utf-8"))["package"]["version"]
@@ -378,12 +424,14 @@ def stop(root: Path, control: Path, record_path: Path) -> dict:
 
 def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
-    result.add_argument("action", choices=("start", "status", "stop"))
+    result.add_argument("action", choices=("start", "status", "stop", "maps-status", "maps-skip", "maps-configure"))
     result.add_argument("root", help="initialized managed ROOT")
     result.add_argument("--port", type=port_number, default=None,
                         help="start port (default 8765; 0 chooses an available port)")
     result.add_argument("--new-url", action="store_true",
                         help="explicitly choose a new URL after the previous process has died")
+    result.add_argument("--media-root", type=Path,
+                        help="additional local image directory outside the canonical directory")
     return result
 
 
@@ -391,22 +439,42 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
         root = root_path(args.root)
+        media_root = args.media_root.expanduser().resolve() if args.media_root else None
+        if media_root is not None and not media_root.is_dir():
+            raise ServiceError("media root must be an existing directory")
         control = control_path(root)
-        if args.action == "start":
+        if args.action in ("start", "maps-skip", "maps-configure"):
             checked_directory(control, create=True)
         elif not checked_directory(control, create=False):
-            result = service_status(root, control, None)
+            result = ({"asked": False, "configured": False, "skipped": False}
+                      if args.action == "maps-status" else service_status(root, control, None))
             print(json.dumps(result, ensure_ascii=False))
             return 0
-        if args.action != "start" and not (control / "lock").exists():
+        if args.action not in ("start", "maps-skip", "maps-configure") and not (control / "lock").exists():
             if (control / "instance.json").exists():
                 raise ServiceError("service record exists without its control lock")
-            print(json.dumps(service_status(root, control, None), ensure_ascii=False))
+            result = ({"asked": False, "configured": False, "skipped": False}
+                      if args.action == "maps-status" else service_status(root, control, None))
+            print(json.dumps(result, ensure_ascii=False))
             return 0
-        with locked_control(control, create=args.action == "start"):
+        with locked_control(control, create=args.action in ("start", "maps-skip", "maps-configure")):
             record = control / "instance.json"
-            if args.action == "start":
-                result = start(root, control, record, args.port, args.new_url)
+            map_path = control / "maps.json"
+            if args.action in ("maps-status", "maps-skip", "maps-configure"):
+                config = read_map_config(map_path)
+                if args.action == "maps-skip":
+                    write_map_config(map_path, {**config, "asked": True})
+                    config = read_map_config(map_path)
+                elif args.action == "maps-configure":
+                    key = sys.stdin.readline().strip()
+                    if not re.fullmatch(r"[A-Za-z0-9_-]{20,256}", key):
+                        raise ServiceError("expected a Google Maps JavaScript API key on stdin")
+                    write_map_config(map_path, {"asked": True, "key": key})
+                    config = read_map_config(map_path)
+                result = {"asked": config["asked"], "configured": bool(config.get("key")),
+                          "skipped": config["asked"] and not bool(config.get("key"))}
+            elif args.action == "start":
+                result = start(root, control, record, args.port, args.new_url, media_root)
             elif args.action == "stop":
                 result = stop(root, control, record)
             else:

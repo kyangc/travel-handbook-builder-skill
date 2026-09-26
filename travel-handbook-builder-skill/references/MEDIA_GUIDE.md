@@ -2,7 +2,7 @@
 
 本入口把 Agent 已经取得或生成的图片元信息写入攻略包，并显式关联 Trip 或 Place。它不搜索、下载、生成、上传或发布图片，也不从文件名、alt、caption 或来源标题推断用途、许可和表现形式。
 
-当前版本的浏览器预览不渲染新增 Media，也不服务任意本地图片路径。`media.image.add`、`client read media` 和 `client check` 只能证明元信息、用途已记录且通过相应检查，不能证明页面已显示图片。本版已知的不渲染限制可据同版指南说明；服务/API 就绪不等于画面已渲染，未查看渲染页面时可交付记录与 URL，并说明其他页面内容尚未目视核验。
+当前浏览器预览会按显式 `trip_overview` / `place_intro` 用途显示图片：Trip 总览图、途点卡、地点详情及关联该 Place 的日程小图使用同一 Media。缺图或加载失败时保留纯文本版式，多张图片按包内顺序尝试。`media.image.add`、`client read media` 和 `client check` 只证明元信息与用途已记录，不能证明远程图片可达或页面已渲染；只有实际查看渲染页面后才能声称图片已显示。未目视核验时仍可交付已验证的记录与可用 URL，并明确页面显示尚未核验。
 
 ## Schema 与旧包边界
 
@@ -27,8 +27,7 @@
 }}
 ```
 
-`locator` 是图片自身位置，可以是 URL、包内相对位置或本地私有路径；`source` 是已有 Source handle，两者不能互换。本方法只记录字符串，不读取 locator，也不检查远程可访问性。私有本地路径不会因此变成浏览器可读或可公开服务的文件。
-临时本地路径离开当前机器或目录后可能失效；记录 locator 不会复制图片，未来要展示时须重新核对文件可达性及当时的运行时能力，不应承诺此路径可直接复用。
+`locator` 是图片自身位置，可以是 HTTPS URL、相对于 canonical 所在目录的路径或本地私有绝对路径；`source` 是已有 Source handle，两者不能互换。本方法只记录字符串，不读取 locator，也不检查远程可访问性。预览只从 canonical 明确引用的 image Media 按 ID 读取本地图片，并限制在 canonical 所在目录；目录外的本地图片须由启动者显式指定额外资源根（发行版 `--media-root`，开发预览 `TRAVEL_MEDIA_ROOT`）。路径遍历、越界符号链接、非图片文件及未经引用的文件不会被读取。临时本地路径离开当前机器或目录后仍可能失效；记录 locator 不会复制图片。
 
 `source` 可省略；只有 Source 确实对应**这张图片**时才关联。地点介绍、菜单或营业信息的文字来源不自动成为图片来源。旅行者另行提供的自绘图可只记录其已知描述与私人使用范围；若需把旅行者的图片出处陈述作为 Source 留存，可另行记录该陈述，不能借用无关网页。自绘不等于 `creation.kind=generated` 或 `captured`，制作方式无可靠记录时省略 `creation`：
 
@@ -103,4 +102,4 @@
 
 update 只修改 alt、caption、usage_rights；caption 和 usage_rights 可 clear，alt 必须保持非空。locator、kind、representation、creation、source_ref 和 id 不可通过该方法替换，usages 必须使用专门的 add/remove。所有失败遵守批次原子性，成功 request_id 原样重放不会重复创建素材或用途。
 
-`check.valid=true` 只证明结构、引用、用途类型和有限生成来源约束通过，不证明图片内容与 alt 相符、来源真实、许可足够、文件存在、浏览器可读、生成质量合格或页面已经展示。
+`check.valid=true` 只证明结构、引用、用途类型和有限生成来源约束通过，不证明图片内容与 alt 相符、来源真实、许可足够、文件存在、浏览器可读、生成质量合格或页面已经展示。预览只直接加载 HTTPS 远程 URL，不代理远程图片；远程服务拒绝热链时图片会隐藏。

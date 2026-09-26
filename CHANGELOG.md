@@ -4,7 +4,19 @@
 
 ## [Unreleased]
 
-目前没有尚未发布的变化。
+本节暂无新增条目。
+
+## [0.3.0] - 2026-09-26
+
+### Changed
+
+- 增加 `task.retire`：仅对 open Task 写入有理由的 `not_needed`，保留身份、历史及旧完成记录，返回需复核的引用；当前待办不显示撤下项，不伪造完成。
+- Route Stop 可选 `encounter_kind=visit|pass_through`，支持公开 compose/edit 设置与清除，缺省保持未指定；原位 `route.bind_visit` 保留安排身份。日程仅对明确经过点去卡，连接和必要事实保留，不做同地点全局去重。
+- 扩展 Trip/Day 原位文案、Task action/targets/notes 和来源可读性；网页补足图片、详情、待办和响应式表现。无 Google Key 可用 OpenStreetMap；统一分类标记与跨尺寸重算，保持 Place/AccessPoint 坐标身份，内部采集诊断不进入旅客界面。
+- 公开指南补充 Task/现场提示、地点事实/行程日期、共享来源批量写入和地图有界采集的具体核对；不新增自动选择、预订、付款或公开发布能力。
+- 酒店地点可明确记录当地入住起始时间 `role_details.lodging.check_in_time`，公开 Place 创建/更新支持角色详情整体设置与清除并保护已有字段证据。首次到店仍为 check_in；只有明确到店时间与酒店时间上下文可安全比较且早于起始时间时，页面显示“入住·行李寄存”。等于/晚于或时间未知、冲突时保持“入住”，后续 return 不变；不推断提前进房或自动改行程顺序。
+- 继续使用 `1.0` profile；旧数据缺省保持兼容，含新可选字段的包不保证旧严格校验器接受，须保留生成版本。
+- 既有独立 caller 在 GuideNote 重复及日期归属仍有部分失败；已知问题的确定性副本修复和指南静态检查不证明最终指南的自主执行效果。本版工程、包外 CLI 与页面验证已分别留证；这些证据不替代外部事实、Google真实鉴权和公开素材许可的核对，也不表示用户本机已安装。
 
 ## [0.2.0] - 2026-09-25
 
@@ -54,6 +66,7 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.0
 [0.2.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.1.0

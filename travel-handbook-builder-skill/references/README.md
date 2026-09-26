@@ -52,7 +52,7 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 - 每次新成功批次 revision 加一，即使某动作回报 `no_change`，以保存新请求回执；成功请求重放不增加 revision。`structured` 表示发生领域写入，不代表来源内容已全部转换、事实已核验或安排可执行。
 - 直接动作错误带从 0 起的 `op_index`；基本输入错误尽量带 parameter。最终校验错误保留规范 JSON path，并给 `related_op_indices` 指向相关写操作；跨对象错误可能关联多项，不能将其当精确的唯一根因。
 
-已有住宿订单与确认权益见[订单指南](RESERVATION_GUIDE.md)，住宿和房间计划见 [住宿指南](STAY_GUIDE.md)，独立于日程的地点推荐见 [推荐指南](RECOMMENDATION_GUIDE.md)。
+已有住宿订单与确认权益见[订单指南](RESERVATION_GUIDE.md)，住宿和房间计划见 [住宿指南](STAY_GUIDE.md)，独立于日程的地点推荐见 [推荐指南](RECOMMENDATION_GUIDE.md)，可完成的行前动作见 [Task 准备指南](TASK_PREPARATION_GUIDE.md)。
 
 ## 当前可调用的写动作
 
@@ -60,15 +60,15 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 |---|---|---|
 | `trip.define` | start_date、end_date、default_timezone | 只能定义一次；标题来自 new_workspace；新包 1.0 |
 | `trip.change_dates` | start_date/end_date 至少一项 | 不批量移动 Day；范围外 Day 返回具体 warning 并保留 |
-| `trip.update` | set.summary 或 clear.summary | 只改旅行摘要；保留 Trip 身份、日期、时区和其他事实 |
+| `trip.update` | set.title/set.summary 或 clear.summary | 原位改旅行标题/摘要；标题须非空，保留 Trip 身份、日期、时区和其他事实 |
 | `party.describe` | count、members_status、clear 至少一项 | 人数和名单完整性独立，不生成匿名成员 |
 | `party.member.add` | label | age、declared_category；返回稳定 member handle |
 | `party.member.update` | target、set | label可改，年龄/原词类别只补缺失或同值 |
 | `party.group.add` | members | label；成员handle去重后建立不可变组 |
-| `day.add` | date、timezone | title；顺序按添加顺序，不按日期自动重排 |
-| `day.update` | target；date/timezone 至少一项 | 只改明确字段，沿用执行事实日历保护，不改 Item/Service/Stay |
-| `place.add` | name | roles 可省略为分类未知；restaurant 映射为 dining |
-| `place.update` | target | set、clear、append_note、add_links、replace_weekly_hours；也保留完整 links，至少一个有效修改 |
+| `day.add` | date、timezone | 非空 title/summary；顺序按添加顺序，不按日期自动重排 |
+| `day.update` | target；date/timezone/set/clear 至少一项 | set/clear 仅限 Day.title/summary；日期/时区沿用执行事实日历保护，不改 Item/Service/Stay |
+| `place.add` | name | roles 可省略为分类未知；restaurant 映射为 dining；可选 role_details 须与 roles 一致 |
+| `place.update` | target | set、clear、append_note、add_links、replace_weekly_hours；role_details 整体替换/清除；也保留完整 links，至少一个有效修改 |
 | `access_point.add` | place、name、kind | location、access_notes、notes；属于一个既有 Place，不从父地点继承定位 |
 | `access_point.update` | target | set/clear/append_note；只改 name、location、access_notes、notes，place/kind 不改 |
 | `place.hours.update` | target、scope、timezone；weekly/closed_dates 至少一个 | other 还需 label；按星期更新，或新增绝对自然日关闭，保留其他规则 |
@@ -94,8 +94,9 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 | `plan.withdraw` | target、reason | Item及主Journey/Route退役，保留订单、权益、费用、付款、待办与Claim并返回review refs |
 | `task.add` | title、action、targets | notes、category、preparation、depends_on、checklist、assignees、beneficiaries；状态 open，1.0个人范围写快照并允许具体 Issue 目标 |
 | `task.complete` | target、record_note | completed_at；open 清单阻止完成，open 依赖只提示，不推翻明确完成事实 |
-| `task.amend` | target | set/clear/append_note、checklist_edits；清单支持 add/set_status/rename，rename 保留 id/status/顺序；支持assignees/beneficiaries，done定义字段须先reopen |
+| `task.amend` | target | set.action 可在模型枚举内原位纠错；set.targets 整体改挂至显式当前 Item 等受支持目标，不接受原始 target_refs；其他 set/clear/append_note、checklist_edits 及 assignees/beneficiaries 仍受原保护，done 定义字段须先 reopen |
 | `task.reopen` | target、reason | reopened_at；只重开 done Task 并追加不可变完成快照 |
+| `task.retire` | target、reason | 1.0 仅将 open Task 原位标为 not_needed，保留身份与历史并记录原因；done 须先显式 reopen，不自动改动引用方 |
 | `issue.record` | title、targets、impact | resolution_needed；只接受明确 Place handle，建立 open Issue，不定位 Route/Segment |
 | `issue.resolve` | target、resolution_note；operation.origin 必需 | 单调 open→resolved，生成 status Claim；同值 no_change、矛盾拒绝 |
 | `service.record` | mode、service_number、service_date、calls | operator、mode_label、notes；Call按key返回稳定handle，operator可未知 |
@@ -105,6 +106,7 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 | `journey.replace_leg` | target、leg、replacement、connections、reason | 新Leg与相邻Connection身份，未改对象逐值保持；旧片段仍有领域/活来源引用或整Journey执行事实时拒绝 |
 | `vehicle.record_owned` | 无必填业务字段 | category、actual_vehicle、drivers、requirements、notes；固定source_kind=owned，不生成租赁或费用 |
 | `route.compose` | day、title、stops、segments | participants、timing；Segment可拥有唯一Leg，重复地点保持不同 Stop； `source_adoption` 见来源采用指南 |
+| `route.bind_visit` | target、stops、segments、source_stop_key、reason | route_title 可选且默认原 Item.title；旧 Place 须与指定 Stop 的 Place ref 精确对应；把显式 current 普通 Visit 原位细化为 Route，保留 Item 身份、Day 序位及整体内容；不合并既有两安排，冲突字段受保护；详见[路线指南](MOVEMENT_GUIDE.md#已有-visit-原位细化为-route) |
 | `route.edit` | target、edits | Stop/inline Segment既有编辑；leg-backed Segment可设时间或无损bind_service |
 | `route.replace_interval` | target、from_stop、to_stop、interior_stops、segments、reason | clear_stale_summary、实验性 source_adoption；保留两端并用 `from`/`to` 局部键完整重建区间；全程摘要须显式且无保护地清理 |
 | `path.add_schematic` | coordinate_system、mode、parts | mode_label、notes；仅 WGS84 示意线，不做寻路/插值/距离推算 |
@@ -183,3 +185,16 @@ links 目前仅支持 add，结果 `parts.links["map-main"]` 是新 Link 的 han
 value.kind=exact 仅表示单一金额值；“约”的认识性质保存在 Claim.basis=estimate，报价的 evidence_refs 引用它，消费者不能忽略。金额用十进制字符串；原币保留，不按未知人数乘总价。`quote.record` 本身不执行汇率换算，也不把参考报价记成本次费用；费用和预算应使用上表独立的 cost/exchange_rate/budget 方法。
 
 每个动作可附 `origin: {basis, statement}`，生成针对主对象的 Claim，回执提供 parts.evidence。它保留 Agent 明确给出的依据，不自动标“已核查”；quote 额外绑定 evidence_refs。单个路线耗时另有来源快照、定位与刷新方法，见 SOURCE_GUIDE；尚无通用字段合并或全量覆盖统计。
+
+### Place lodging 入住起始时间
+
+`role_details.lodging.check_in_time` 是可选酒店当地 `HH:mm`（`00:00`–`23:59`），不含日期或时区。省略表示未知；不从 `check_in_rule` 自由文本或 Trip 默认时区解析/推断，不要求同时补 Place.timezone。旧 `check_in_rule` 和其他角色资料继续保留。
+
+```json
+{"method":"place.add","args":{"name":"示例酒店","roles":["lodging"],"role_details":{"lodging":{"check_in_time":"15:00","check_in_rule":"酒店明确的办理条件"}}}}
+{"method":"place.update","args":{"target":{"handle":"<hotel-handle>"},"set":{"role_details":{"lodging":{"check_in_time":"15:00","check_in_rule":"酒店明确的办理条件"},"dining":{"cuisines":["地方菜"]}}}}}
+```
+
+第二例须已有或同批明确设置 `roles:["lodging","dining"]`；现有模型逐个检查角色一致性，不自动补角色。`set.role_details` 是整个对象替换，不嵌套合并：先公开读取，完整带回仍有效的兄弟字段及其他角色资料。只移除入住时间时，从读取的完整对象删除 `lodging.check_in_time` 后 `set.role_details`；`clear:["role_details"]` 清全部角色详情，保留roles。省略顶层role_details参数保留原对象；整体替换时未带回的嵌套键会移除。`check_in_time`及`update.set.role_details`不接受null，非法时间、未建模状态、点路径clear均拒绝。Python可选参数`Editor.place_add(role_details=None)`沿既有语义视为未提供；公开JSON请求仍按通用参数规则拒绝显式null。不新增寄存/登记/进房状态或动作，也不自动排序。
+
+已有adopted Claim若指向实际变化的 `role_details`、其角色子树或具体点分隔字段，修改/移除会以 `PLACE_ROLE_DETAILS_CHANGE_BLOCKED` 返回Claim引用；同值及未改变的兄弟字段不误阻，来源/Claim不会自动删掉或改写。本批不新增source field binding aspect，现有来源采用/冲突流程不被替代。受管理ROOT用现有 `client prepare-request` → `commit` 提交同一公开请求；`prepare-place` 加法白名单不扩，返回unsupported并指向 `place.update` 和此公开请求路径，canonical保持不变。

@@ -7,7 +7,10 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
+import os
 from pathlib import Path, PurePosixPath
+import re
+import stat
 import sys
 from urllib.parse import unquote, urlsplit
 
@@ -70,6 +73,22 @@ def api_payload(path: Path) -> bytes:
     ) + "\n").encode("utf-8")
 
 
+def map_config_payload(path: Path | None) -> bytes:
+    key = None
+    if path is not None:
+        try:
+            metadata = path.lstat()
+            if (stat.S_ISREG(metadata.st_mode) and metadata.st_uid == os.getuid()
+                    and not metadata.st_mode & 0o077):
+                value = json.loads(path.read_text(encoding="utf-8"))
+                candidate = value.get("key") if isinstance(value, dict) else None
+                if isinstance(candidate, str) and re.fullmatch(r"[A-Za-z0-9_-]{20,256}", candidate):
+                    key = candidate
+        except (OSError, UnicodeError, ValueError):
+            pass
+    return (json.dumps({"provider": "google" if key else "osm", "key": key}) + "\n").encode("utf-8")
+
+
 def safe_asset(path: str) -> Path | None:
     if path.startswith("//") or "\\" in path or "\x00" in path:
         return None
@@ -92,14 +111,79 @@ def safe_asset(path: str) -> Path | None:
     return candidate
 
 
+IMAGE_TYPES = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".gif": "image/gif", ".webp": "image/webp", ".avif": "image/avif",
+}
+
+
+def image_signature(data: bytes, suffix: str) -> bool:
+    return {
+        ".png": data.startswith(b"\x89PNG\r\n\x1a\n"),
+        ".jpg": data.startswith(b"\xff\xd8\xff"),
+        ".jpeg": data.startswith(b"\xff\xd8\xff"),
+        ".gif": data.startswith((b"GIF87a", b"GIF89a")),
+        ".webp": data.startswith(b"RIFF") and data[8:12] == b"WEBP",
+        ".avif": data[4:8] == b"ftyp" and b"avif" in data[8:24],
+    }.get(suffix, False)
+
+
+def media_payload(export_path: Path, media_root: Path | None,
+                  media_id: str) -> tuple[bytes, str] | None:
+    package, _ = load_validated_export(export_path)
+    media = next((entry for entry in package.get("media", [])
+                  if entry["id"] == media_id and entry["kind"] == "image"), None)
+    if media is None or not media.get("usages"):
+        return None
+    locator = media["locator"]
+    if (not isinstance(locator, str) or not locator or "\x00" in locator
+            or "\\" in locator or urlsplit(locator).scheme
+            or locator.startswith("//")):
+        return None
+    original = Path(locator)
+    if ".." in original.parts:
+        return None
+    candidate = original if original.is_absolute() else export_path.parent / original
+    resolved = candidate.resolve()
+    roots = [export_path.parent.resolve()]
+    if media_root is not None:
+        roots.append(media_root.resolve())
+    if not any(root in resolved.parents for root in roots):
+        return None
+    suffix = resolved.suffix.lower()
+    if suffix not in IMAGE_TYPES or not resolved.is_file() or resolved.stat().st_size > 20_000_000:
+        return None
+    data = resolved.read_bytes()
+    if not image_signature(data, suffix):
+        return None
+    return data, IMAGE_TYPES[suffix]
+
+
+def media_id_from_path(path: str) -> str | None:
+    if not path.startswith("/api/media/"):
+        return None
+    raw = path.removeprefix("/api/media/")
+    if not raw or "/" in raw or "\\" in raw or "%2f" in raw.lower():
+        return None
+    try:
+        decoded = unquote(raw, errors="strict")
+    except (UnicodeDecodeError, ValueError):
+        return None
+    return decoded if decoded and "/" not in decoded and "\\" not in decoded else None
+
+
 class PreviewServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
 
     def __init__(self, address: tuple[str, int], export_path: Path,
-                 instance_id: str | None = None):
+                 media_root: Path | None = None,
+                 instance_id: str | None = None,
+                 map_config: Path | None = None):
         self.export_path = export_path
+        self.media_root = media_root
         self.instance_id = instance_id
+        self.map_config = map_config
         super().__init__(address, PreviewHandler)
         host, port = self.server_address[:2]
         authority = f"{host}:{port}"
@@ -129,6 +213,8 @@ class PreviewHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(payload)))
         self.send_header("Cache-Control", cache_control)
         self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("X-Frame-Options", "DENY")
         if self.server.instance_id is not None:
             self.send_header("X-Travel-Preview-Instance", self.server.instance_id)
         if allow is not None:
@@ -180,6 +266,22 @@ class PreviewHandler(BaseHTTPRequestHandler):
                 cache_control="no-store",
             )
             return
+        if path == "/api/map-config":
+            self.send_payload(HTTPStatus.OK, map_config_payload(self.server.map_config),
+                              "application/json; charset=utf-8", cache_control="no-store")
+            return
+        media_id = media_id_from_path(path)
+        if media_id is not None:
+            try:
+                result = media_payload(self.server.export_path, self.server.media_root, media_id)
+            except (PreviewInputError, OSError, ValueError):
+                result = None
+            if result is None:
+                self.send_problem(HTTPStatus.NOT_FOUND, "not found")
+                return
+            payload, content_type = result
+            self.send_payload(HTTPStatus.OK, payload, content_type, cache_control="no-store")
+            return
         asset = safe_asset(path)
         if asset is None:
             self.send_problem(HTTPStatus.NOT_FOUND, "not found")
@@ -194,11 +296,24 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if not self.request_origin_is_allowed():
             return
         path = self.request_path()
-        if path == "/api/handbook":
+        if path in ("/api/handbook", "/api/map-config"):
             self.send_problem(
                 HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed",
                 allow="GET", include_body=False,
             )
+            return
+        media_id = media_id_from_path(path)
+        if media_id is not None:
+            try:
+                result = media_payload(self.server.export_path, self.server.media_root, media_id)
+            except (PreviewInputError, OSError, ValueError):
+                result = None
+            if result is None:
+                self.send_problem(HTTPStatus.NOT_FOUND, "not found", include_body=False)
+                return
+            payload, content_type = result
+            self.send_payload(HTTPStatus.OK, payload, content_type,
+                              cache_control="no-store", include_body=False)
             return
         asset = safe_asset(path)
         if asset is None:
@@ -234,14 +349,22 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--port", type=port_number, default=8765,
                         help="loopback port (default: 8765; use 0 for an available port)")
     result.add_argument("--instance-id", help=argparse.SUPPRESS)
+    result.add_argument("--media-root", type=Path,
+                        help="additional local image directory outside the canonical directory")
+    result.add_argument("--map-config", type=Path, help=argparse.SUPPRESS)
     return result
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
-    export_path = args.export.expanduser().resolve()
-    if export_path.is_symlink() or not export_path.is_file():
+    selected_export = args.export.expanduser()
+    export_path = selected_export.resolve()
+    media_root = args.media_root.expanduser().resolve() if args.media_root else None
+    if selected_export.is_symlink() or not export_path.is_file():
         print("preview-handbook: export must be an existing regular file", file=sys.stderr)
+        return 2
+    if media_root is not None and not media_root.is_dir():
+        print("preview-handbook: media root must be an existing directory", file=sys.stderr)
         return 2
     if not (ASSET_DIR / "index.html").is_file():
         print("preview-handbook: bundled web assets are missing", file=sys.stderr)
@@ -252,7 +375,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"preview-handbook: {error}", file=sys.stderr)
         return 2
     try:
-        server = PreviewServer(("127.0.0.1", args.port), export_path, args.instance_id)
+        server = PreviewServer(("127.0.0.1", args.port), export_path,
+                               media_root, args.instance_id, args.map_config)
     except OSError as error:
         print(f"preview-handbook: cannot bind loopback port: {error}", file=sys.stderr)
         return 2

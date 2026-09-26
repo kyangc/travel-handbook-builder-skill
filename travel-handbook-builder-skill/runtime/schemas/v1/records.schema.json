@@ -327,6 +327,19 @@
             "$ref": "#/$defs/TaskCompletionHistory"
           },
           "minItems": 1
+        },
+        "retirement": {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "reason"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -359,6 +372,25 @@
                   "record_note"
                 ]
               }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "retirement"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "not_needed"
+              }
+            },
+            "not": {
+              "required": [
+                "completion"
+              ]
             }
           }
         }

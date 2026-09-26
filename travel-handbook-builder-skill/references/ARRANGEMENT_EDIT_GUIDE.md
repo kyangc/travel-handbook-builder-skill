@@ -37,17 +37,20 @@
 
 若相关 GuideNote 或 open Issue 只关联 Place、文字却描述「当前到访/冲突」，`plan.withdraw` 不会自动改写或解决它们。managed 续作可对该 Place 调用 `client context`，从 `related_items`、`related_guide_notes`、`related_issues` 的有界集合复核当前状态，再按旅客决定显式修订；`plan.move`、`plan.update` 改期后亦同。日期本身的来源事实可保留，不能把撤下等同于来源失效。
 
-## 修改 Day 日期或时区
+## 修改 Day 日期、时区或简述
+
+新建 Day 时也可直接用 `day.add(..., summary="当天概况")` 写入可选简述；已有 Day 使用下列 `day.update`。
 
 ```python
 {"method": "day.update", "args": {
   "target": day,
   "date": "2027-04-11",
-  "timezone": "Australia/Hobart"
+  "timezone": "Australia/Hobart",
+  "set": {"title": "抵达与城下町", "summary": "上午抵达，下午步行游览。"}
 }}
 ```
 
-至少提供 `date` 或 `timezone`，只修改明确提供的字段。Day 标题、item_refs 和所有 Item/Service/Stay/Task/Coverage 字段保持。日期使用 ISO 自然日，时区使用 IANA 名称。
+至少提供 `date`、`timezone`、`set` 或 `clear` 中的一项；`set` 只接受非空 `title`/`summary`，`clear` 只接受这两个可选字段。可只改文案，也可与日历字段同批修改；未提交字段保持。Day 的 `item_refs` 和所有 Item/Service/Stay/Task/Coverage 字段保持。日期使用 ISO 自然日，时区使用 IANA 名称。只改文案不会触发日历事实保护；混合请求中的日历变更仍受原保护并保持批次原子性。
 
 对已有 Item 而言，Day 日期或时区变化与跨日移动使用同一有限所属链事实保护。无 blocker 时允许保存，并通过时间诊断报告新的 Day 归属不一致；有 blocker 时整批拒绝，不能靠改 Day 绕过单 Item 时间保护。
 

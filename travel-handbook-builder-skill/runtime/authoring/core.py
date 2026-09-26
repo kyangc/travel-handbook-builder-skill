@@ -674,6 +674,38 @@ def export_package(state, *, revision):
                          'checks_not_run': ['source interpretation', 'full travel feasibility', 'web rendering']}}
 
 
+def protect_place_role_details(editor, place_ref, before, after):
+    """Do not overwrite adopted evidence on a changed role-details subtree."""
+    if before == after:
+        return
+
+    missing = object()
+
+    def value_at(details, path):
+        value = details
+        for part in path:
+            if not isinstance(value, dict) or part not in value:
+                return missing
+            value = value[part]
+        return value
+
+    blockers = []
+    for claim in editor.package.get('claims', []):
+        target = claim.get('target', {})
+        field = target.get('field', '')
+        if (target.get('object_ref') != place_ref or 'local_ref' in target
+                or claim.get('disposition', 'adopted') != 'adopted'
+                or not (field == 'role_details' or field.startswith('role_details.'))):
+            continue
+        path = field.split('.')[1:]
+        if value_at(before, path) != value_at(after, path):
+            blockers.append({'type': 'claim', 'id': claim['id']})
+    if blockers:
+        fail('PLACE_ROLE_DETAILS_CHANGE_BLOCKED',
+             'Adopted role-details evidence must be handled before changing its field',
+             target_ref=copy.deepcopy(place_ref), blocker_refs=blockers)
+
+
 def edit_fields(record, *, changes, clear, append_note, allowed, clearable):
     changes = {} if changes is None else changes
     clear = [] if clear is None else clear
@@ -815,19 +847,25 @@ class Editor:
                                 'end_date': end_date, 'default_timezone': default_timezone})
 
 
-    def day_add(self, *, date, timezone, title=None):
+    def day_add(self, *, date, timezone, title=None, summary=None):
         fields = {'date': date, 'timezone': timezone, 'item_refs': []}
         if title is not None:
+            nonempty(title, 'title')
             fields['title'] = title
+        if summary is not None:
+            nonempty(summary, 'summary')
+            fields['summary'] = summary
         return self.add('day', fields)
 
-    def place_add(self, *, name, roles=None):
+    def place_add(self, *, name, roles=None, role_details=None):
         fields = {'name': name}
         if roles is None:
             if self.package['schema_version'] not in ('1.0',):
                 fail('SCHEMA_VERSION_UNSUPPORTED', 'Unknown classification requires 1.0')
         else:
             fields['roles'] = place_roles(roles)
+        if role_details is not None:
+            fields['role_details'] = copy.deepcopy(role_details)
         return self.add('place', fields)
 
     def access_point_add(self, *, place, name, kind, location=None,
@@ -859,6 +897,7 @@ class Editor:
 
     def place_update(self, *, target, set=None, clear=None, append_note=None, links=None, add_links=None, replace_weekly_hours=None):
         place = self.record(target, {'place'})
+        before_details = copy.deepcopy(place.get('role_details'))
         if add_links is not None:
             if links is not None:
                 fail('CONFLICTING_EDIT', 'Use add_links or links, not both', parameter='add_links')
@@ -893,11 +932,12 @@ class Editor:
                     rule['id'] = self.allocate_id()
         if changes or clear or append_note is not None:
             edit_fields(place, changes=changes, clear=clear, append_note=append_note,
-                        allowed={'name', 'roles', 'local_name', 'aliases', 'address', 'location', 'timezone',
+                        allowed={'name', 'roles', 'role_details', 'local_name', 'aliases', 'address', 'location', 'timezone',
                                  'content', 'notes', 'availability'},
-                        clearable={'roles', 'local_name', 'aliases', 'address', 'location', 'timezone', 'content', 'notes', 'availability'})
+                        clearable={'roles', 'role_details', 'local_name', 'aliases', 'address', 'location', 'timezone', 'content', 'notes', 'availability'})
         elif links is None and replace_weekly_hours is None:
             fail('INVALID_ARGUMENT', 'At least one place edit is required')
+        protect_place_role_details(self, self.ref(target), before_details, place.get('role_details'))
         if links is not None:
             if not isinstance(links, list) or not links:
                 fail('INVALID_ARGUMENT', 'links must be a nonempty list of actions')
@@ -1157,24 +1197,10 @@ class Editor:
                  preparation=None, depends_on=None, checklist=None,
                  assignees=None, beneficiaries=None):
         from .party import participant_member_snapshot
-        from .tasks import (checklist_records, dependency_refs, normalize_category,
-                            normalize_preparation, register_checklist)
-        if not isinstance(targets, list) or not targets:
-            fail('INVALID_ARGUMENT', 'targets must be a nonempty list')
-        target_refs = []
-        for index, target in enumerate(targets):
-            ref = self.ref(target)
-            allowed_types = {'trip', 'item', 'stay'}
-            if self.package.get('schema_version') in {'1.0'}:
-                allowed_types.add('issue')
-            if not (ref.get('type') in allowed_types or
-                    (ref.get('kind') == 'unit' and ref.get('owner', {}).get('type') == 'stay')):
-                fail('REFERENCE_KIND_MISMATCH',
-                     'Task targets must be Trip, Item, Stay, a Stay Unit, or an Issue',
-                     reference=target, parameter=f'targets[{index}]')
-            target_refs.append(ref)
-        fields = {'title': title, 'action': action, 'status': 'open',
-                  'target_refs': target_refs}
+        from .tasks import (checklist_records, dependency_refs, normalize_action, normalize_category,
+                            normalize_preparation, register_checklist, target_refs)
+        fields = {'title': title, 'action': normalize_action(action), 'status': 'open',
+                  'target_refs': target_refs(self, targets)}
         if notes is not None:
             fields['notes'] = notes
         if category is not None:
@@ -1200,6 +1226,8 @@ class Editor:
     def task_complete(self, *, target, record_note, completed_at=None):
         task = self.record(target, {'task'})
         nonempty(record_note, 'record_note')
+        if task['status'] == 'not_needed':
+            fail('TASK_NOT_OPEN', 'A retired Task cannot be completed')
         open_entries = [entry['id'] for entry in task.get('checklist', [])
                         if entry['status'] == 'open']
         if open_entries:
@@ -1218,15 +1246,18 @@ class Editor:
 
     def task_amend(self, *, target, set=None, clear=None, append_note=None,
                    checklist_edits=None):
-        from .tasks import (dependency_refs, edit_checklist, normalize_category,
-                            normalize_preparation)
+        from .tasks import (dependency_refs, edit_checklist, normalize_action, normalize_category,
+                            normalize_preparation, target_refs)
         task = self.record(target, {'task'})
+        if task['status'] == 'not_needed':
+            fail('TASK_NOT_OPEN', 'A retired Task cannot be amended')
         changes = {} if set is None else copy.deepcopy(set)
         clear_fields = [] if clear is None else copy.deepcopy(clear)
         if not isinstance(changes, dict) or not isinstance(clear_fields, list) or not all(
                 isinstance(field, str) for field in clear_fields):
             fail('INVALID_ARGUMENT', 'set must be an object and clear a list of field names')
-        allowed = {'title', 'notes', 'due', 'window', 'category', 'preparation', 'depends_on'}
+        allowed = {'title', 'action', 'notes', 'due', 'window', 'category', 'preparation',
+                   'depends_on', 'targets'}
         clearable = {'notes', 'due', 'window', 'category', 'preparation', 'depends_on'}
         if self.package.get('schema_version') in ('1.0',):
             allowed |= {'assignees', 'beneficiaries'}
@@ -1236,7 +1267,7 @@ class Editor:
         if (not changes and not clear_fields and append_note is None
                 and checklist_edits is None):
             fail('INVALID_ARGUMENT', 'At least one explicit change is required')
-        protected = {'title', 'category', 'preparation', 'depends_on'}
+        protected = {'title', 'action', 'category', 'preparation', 'depends_on', 'targets'}
         if self.package.get('schema_version') in ('1.0',):
             protected |= {'assignees', 'beneficiaries'}
         if (self.package.get('schema_version') in ('1.0',) and task['status'] == 'done'
@@ -1245,10 +1276,15 @@ class Editor:
             fail('TASK_REOPEN_REQUIRED', 'Reopen a done Task before changing its definition or checklist')
         if 'category' in changes:
             changes['category'] = normalize_category(changes['category'], 'set.category')
+        if 'action' in changes:
+            changes['action'] = normalize_action(changes['action'], 'set.action')
         if 'preparation' in changes:
             changes['preparation'] = normalize_preparation(changes['preparation'], 'set.preparation')
         if 'depends_on' in changes:
             changes['depends_on'] = dependency_refs(self, changes['depends_on'], 'set.depends_on')
+        if 'targets' in changes:
+            changes['target_refs'] = target_refs(
+                self, changes.pop('targets'), 'set.targets', require_current_items=True)
         if 'assignees' in changes:
             from .party import participant_member_snapshot
             changes['assignees'] = participant_member_snapshot(
@@ -1259,13 +1295,14 @@ class Editor:
                 self, changes['beneficiaries'], 'set.beneficiaries')
         if changes or clear_fields or append_note is not None:
             edit_fields(task, changes=changes, clear=clear_fields, append_note=append_note,
-                        allowed=allowed, clearable=clearable)
+                        allowed=(allowed - {'targets'}) | {'target_refs'},
+                        clearable=clearable)
         if checklist_edits is not None:
             edit_checklist(self, self.handle(target), checklist_edits)
         return self.handle(target)
 
 
-from .routes import route_compose, route_edit, route_replace_interval
+from .routes import route_bind_visit, route_compose, route_edit, route_replace_interval
 from .journeys import (journey_compose, journey_edit, journey_replace_leg,
                        path_add_schematic, path_record)
 from .transport_services import service_record, service_update
@@ -1283,7 +1320,7 @@ from .arrangements import (day_update, plan_move, plan_withdraw,
 from .stays import stay_action_add, stay_action_bind, stay_plan, stay_change_plan
 from .recommendations import recommendation_add, recommendation_update
 from .guide_notes import source_record, guide_note_add, guide_note_update
-from .tasks import task_reopen
+from .tasks import task_reopen, task_retire
 from .media import media_image_add, media_update, media_usage_add, media_usage_remove
 from .party import party_describe, party_member_add, party_member_update, party_group_add
 from .money import (budget_configure, cost_confirm, cost_record,
@@ -1308,7 +1345,8 @@ METHODS = {
     'media.image.add': media_image_add, 'media.update': media_update,
     'media.usage.add': media_usage_add, 'media.usage.remove': media_usage_remove,
     'issue.record': issue_record, 'issue.resolve': issue_resolve,
-    'route.compose': route_compose, 'route.edit': route_edit,
+    'route.compose': route_compose, 'route.bind_visit': route_bind_visit,
+    'route.edit': route_edit,
     'route.replace_interval': route_replace_interval,
     'journey.compose': journey_compose, 'journey.edit': journey_edit,
     'journey.replace_leg': journey_replace_leg,
@@ -1324,7 +1362,7 @@ METHODS = {
     'quote.record': Editor.quote_record,
     'plan.add': Editor.plan_add, 'task.add': Editor.task_add,
     'task.complete': Editor.task_complete, 'task.amend': Editor.task_amend,
-    'task.reopen': task_reopen,
+    'task.reopen': task_reopen, 'task.retire': task_retire,
     'party.describe': party_describe, 'party.member.add': party_member_add,
     'party.member.update': party_member_update,
     'party.group.add': party_group_add,

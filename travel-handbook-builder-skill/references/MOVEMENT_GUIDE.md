@@ -2,6 +2,8 @@
 
 与 [共同调用约定](CALLER_GUIDE.md) 配合使用。以下是放入 operations 的动作；day、place_a 等变量都是已创建对象的 handle 或同批前置 local 引用。不需要阅读领域 Schema。此切片只编制已经选定的安排。
 
+补已选日程的相邻交通时，按当前 Day 的 active Item 顺序及已选 Stay 地点核对端点；酒店到首个安排、最后安排回酒店也只在该住宿和衔接确属本次计划时纳入。先读已有 Journey/Route、Leg/Segment 与来源，避免重复建交通 Item。对已采用的方式和路线，可用适用的公开资料补步行/乘车时长、必要换乘和候车范围，并保留估算条件；具体字段分别见下文的 `timing`、`duration_minutes`、Connection step `duration` 等。资料只给出备选而用户尚未选定时，不创建正式 Journey/Route，不替用户选路；未知项简短说明即可。两个活动的起止时刻差不是交通用时，不能当作 Leg 或 Segment duration。
+
 ## 从 A 到 B 的多段交通
 
 一次 journey.compose 生成一条正式交通安排及其移动段。未选定班次时，各 independent 段必须明确交通方式和起终地点；工具不根据名称、坐标或换乘说明自动添加步行段。1.0 也支持明确 Service/Call 的 scheduled 段、逐段时间和有类型 Connection，完整调用见[班次与接续指南](TRANSPORT_SERVICE_GUIDE.md)。
@@ -29,13 +31,15 @@ legs 是有序非空列表，key 在此安排内唯一。independent 段可选 t
 
 route.compose 创建一条正式游览安排。地点表示可复用实体，stop 表示**这次经过**。折返同一座桥时必须用两个不同 key 引用同一个 Place。
 
+若已有一个 current 普通 Visit，后来只是把**这同一次到访**细化为多途经点路线，使用下文的 `route.bind_visit` 原位细化，不再 `route.compose` 出第二个 Item。同一 Place 在不同时间确有两次到访时则是两个合法安排；仅凭同名或同 Place 不推断合并。
+
 ```python
 {"method": "route.compose", "as": "walk", "args": {
     "day": day, "title": "示例折返步行",
     "stops": [
-        {"key": "bridge-out", "place": bridge, "purpose": "去程看桥", "dwell_minutes": 10},
+        {"key": "bridge-out", "place": bridge, "purpose": "去程看桥", "dwell_minutes": 10, "encounter_kind": "visit"},
         {"key": "view", "place": viewpoint},
-        {"key": "bridge-back", "place": bridge, "purpose": "返程休息", "dwell_minutes": 20}
+        {"key": "bridge-back", "place": bridge, "purpose": "返程只经过", "dwell_minutes": 20, "encounter_kind": "pass_through"}
     ],
     "segments": [
         {"key": "out", "from": "bridge-out", "to": "view", "mode": "walking", "duration_minutes": [30, 40]},
@@ -44,7 +48,7 @@ route.compose 创建一条正式游览安排。地点表示可复用实体，sto
 }}
 ```
 
-stops 至少两次停留，segments 恰好按顺序连接所有相邻 stop。stop 的 key、place 必填；可选 purpose、dwell_minutes、notes。没有 purpose 时，生成明确占位“本次游览目的未记录”，并在 parts.missing_facts 报告缺失；不猜游览原因。
+stops 至少两次停留，segments 恰好按顺序连接所有相邻 stop。stop 的 key、place 必填；可选 purpose、dwell_minutes、notes、`encounter_kind`。`encounter_kind` 仅接受 `visit`（本次游览）或 `pass_through`（本次只经过、不作为景点游览），有明确依据才填；省略表示未知，导出时不写默认值。`pass_through` 不表示不停步、无耗时或无需接驳/购买，有 dwell 时照常保留。`route.compose` 按本次顺序生成 Stop 的 `role=start/waypoint/end`；它表示路线位置，不是 Place 的功能类别 `roles`，同一地点可在不同 Stop 分别出现。不能凭相同 Place、role、purpose 或 dwell 猜测本次活动，也不能据此自动合并 Route 外的 Visit。不要把“起点/途经/终点”写成 Place 类别；地点分类仍只按[地点角色合同](CALLER_GUIDE.md#地点类型与资料不足)中的已知功能填写，未知可省略。没有 purpose 时，生成明确占位“本次游览目的未记录”，并在 parts.missing_facts 报告缺失；不猜游览原因。
 
 segment 的 key/from/to/mode 必填；可选 mode_label、duration_minutes、distance_m、path、notes。mode 可用 walking、cycling、driving、taxi、bus、rail、metro、tram、air、ferry、other；other 需 mode_label。不同段可以不同 mode，不传 mixed 给单段。
 
@@ -58,6 +62,32 @@ segment 的 key/from/to/mode 必填；可选 mode_label、duration_minutes、dis
 {"local": "walk", "part": {"kind": "stop", "key": "bridge-back"}}
 {"local": "walk", "part": {"kind": "segment", "key": "back"}}
 ```
+
+### 已有 Visit 原位细化为 Route
+
+先 `client read` 确认要细化的这次 Visit，取得其 Item handle、原 Place 和现行 revision；以下 `visit` 是这个 Item 的公开 handle，`bridge`、`viewpoint` 是已选 Place 的公开 handle。`source_stop_key` 指向有序 stops 中**精确引用原 Visit Place** 的一次 Stop；旧 Place 的子 AccessPoint 不是相同 Place ref，不能作为这次映射。折返同一 Place 时，由作者根据这次路线选择承接旧到访的那次经过，不按地点名猜。
+
+```python
+{"method": "route.bind_visit", "args": {
+    "target": visit, "source_stop_key": "bridge-out",
+    "reason": "把这次桥边到访细化为折返路线",
+    "stops": [
+        {"key": "bridge-out", "place": bridge, "purpose": "去程看桥"},
+        {"key": "view", "place": viewpoint, "purpose": "经过观景点"},
+        {"key": "bridge-back", "place": bridge, "purpose": "返回桥边"}
+    ],
+    "segments": [
+        {"key": "out", "from": "bridge-out", "to": "view", "mode": "walking"},
+        {"key": "back", "from": "view", "to": "bridge-back", "mode": "walking"}
+    ]
+}}
+```
+
+`reason` 必填；`route_title` 可选，省略时新 Route 沿用旧 Item.title，显式提供也只命名 Route，不暗改 Item.title。Stop/Segment 输入与 `route.compose` 相同，包括可选 `encounter_kind`，但此入口不接受 `day`、整体 `timing`、`participants` 或 `source_adoption`：原 Item 的身份、Day 序位、title、整体 timing、participants、purpose、notes 保留，kind 改为 route；回执 `primary` 仍是原 Item handle，`parts.route/stops/segments/legs` 是新路线引用，`parts.source_place_ref/source_stop_key/preserved_fields/reason/review_refs` 供读回核对。已有 Task 等指向该 Item 的关联不会因细化而自动改挂、取消或一律阻断；对 review refs 按实际文字与现实承诺复核。已采用的 kind/place_ref/subject_ref Claim 或旧 place_ref 来源字段绑定等真正冲突会以 `ROUTE_BIND_BLOCKED` 和具体 blocker 原子拒绝；`source.field.resolve` 不是通用解绑入口，Place 映射不符也拒绝，不能绕过保护另造重复 Item。使用同一 managed ROOT 的 prepare-request→commit→read/check 核对当前状态，不把 check.valid 当作现实路线或票券适用性的证明。
+
+`review_refs` 是有限的复核候选清单，仅列出直接指向原 Item 的 Guide Note、Issue、Reservation、Cost；保持原目标和状态的 open/done Task 不因此列入，也不会自动重开。`review_refs=[]` 只表示这份清单没有标出候选，不表示没有 Task 或其他关联。此清单不检索自由文本、间接关联或付款依赖；对现实承诺仍需结合 `client read` 中的实际对象核对。
+
+反例：已经有独立 Route Item 和 Visit Item 的旧重复，不可再对 Visit 调用 `route.bind_visit` 来期待自动合并两个对象；本方法只防止**今后**把一次普通 Visit 细化时新建第二个 Item。不要把合法的另一时段再访、Route 外另一次 Visit，或两个同 Place Stop 自动合并。
 
 ## 明确整体安排时间，不推算班次或分段时间
 
@@ -103,7 +133,7 @@ estimated表示预计安排；原文明示固定时段才用fixed。1.0 支持en
 }}
 ```
 
-set_stop 可 set/clear purpose、dwell_minutes、notes；clear purpose 恢复缺失占位。set_segment 可 set/clear duration_minutes、distance_m、path、notes。clear 是字段名列表，与 set 同一字段不能混用。所有修改需属于 target 这条路线，否则整批拒绝。
+set_stop 可 set/clear purpose、dwell_minutes、notes、`encounter_kind`；clear purpose 恢复缺失占位，clear `encounter_kind` 则移除字段、恢复未知。set_segment 可 set/clear duration_minutes、distance_m、path、notes。clear 是字段名列表，与 set 同一字段不能混用，也不能用 null 表示清除。所有修改需属于 target 这条路线，否则整批拒绝。
 
 保留地点、安排、stop、segment 身份和未涉及的信息；相同值返回 no_change。暂不插入/删除/重排，不改地点或交通方式，不处理已确认票券。变更安排需要未来明确的另一类动作，不能偷偷作为资料修正执行。
 

@@ -10,7 +10,11 @@
 
 ## 创建：默认文件式 CLI
 
-新攻略按 `create` → `trip.define` 开始。Trip 和 Day 的日期、时区须来自材料；Place 只要求 name。已选但时间未知的普通安排可不写 timing；缺图片、开放时间、时长、地址、坐标、价格、预订或票据不阻塞 `check` 和首次交付。
+新攻略按 `create` → `trip.define` 开始。Trip 和 Day 的日期、时区须来自材料；Place 只要求 name，但一串名字不等于可阅读的内容已编制完成。编制已选地点内容和到访 Item 前，先读发行包的 [内容指南](CONTENT_COLLECTION_GUIDE.md)：用已有材料，再按需做适度公开研究；以 `Place.content.summary` 写清地点身份与主要吸引力，只在不重复时另补看点，实用条件按其语义记录；不要为每个地点套同一模板或替用户新增选择。主动核对已安排地点与关键交通端点的可靠坐标，让有依据的地图可用；地图搜索链接不等于坐标，找不到时保留未知。已选但时间未知的普通安排可不写 timing；缺图片、开放时间、时长、地址、坐标、价格、预订或票据不阻塞 `check` 和首次交付，首版之后仍可按反馈渐进补充。
+
+输入 Markdown 已有地点简介、出处、已选交通端点/方式或已采用安排的草案时刻时，先判断身份、来源和适用性，再把可采用的事实写入对应公开字段，不统统留在 notes 或写成 unknown；日期与时区有据的草案时刻用[时间指南](TIME_PLAN_GUIDE.md)支持的 `estimated`，而非冒充固定或忽略，未选备选仍不升格为正式安排。提交后用公开 read 对照原材料核对 Place、Item 与相关 Journey/Leg 的实际字段；`check.valid` 不能证明这些事实已经采用。
+
+材料已说明某次已选到访的理由时，创建用 `plan.add.purpose`，修订用 `plan.update.set.purpose` 承接，不只放 `notes`。`Place.content.summary/highlights` 只写可复用地点事实，不把看点标成“本次重点”；GuideNote 简述来源、适用期和限制，不重述整段 Place 内容。材料没有地址、坐标或时长等信息时，缺项写在 Agent 工作说明里，不写成旅客可见的缺口段落。
 
 发行包先按 Skill 根目录 `README.md` 备好 Python 环境；以下 `SKILL_DIR` 换成发行包绝对路径。仓库内用项目 Python 3.12 的 `-m authoring`，参数相同。路径加引号，每一步核对退出状态与输出后再继续，**不要整段自动提交**。STATE 是新文件；ROOT 不存在或为空。
 
@@ -68,7 +72,7 @@ SKILL_DIR="/absolute/path/to/travel-handbook-builder-skill"
 
 ## 补充与纠正
 
-补充或纠正 Place 时先用 `client context ROOT --handle HANDLE`；只有名称时改用 `--name NAME` 并核对唯一候选，不能按列表顺序猜。context 返回当前 revision、Place、关联 GuideNotes 和 Sources，即使已知 handle 也应查看这些上下文；它不代替其他对象的 `client read` 或全图依赖检查。支持的单 Place 无覆盖补充用[managed 指南](CLIENT_GUIDE.md)的 `prepare-place`。纠正、availability、旧 GuideNote 和安排调整按匹配的专业指南构造**原公开 request**，用同一 managed 目录的 `prepare-request`/`commit`；若窄入口返回 `unsupported`，当前 state/canonical 不变。`prepare-request` 仍执行原领域校验、origin、冲突和保护。
+补充或纠正 Place 时先用 `client context ROOT --handle HANDLE`；只有名称时改用 `--name NAME` 并核对唯一候选，不能按列表顺序猜。context 返回当前 revision、Place、关联 GuideNotes 和 Sources，即使已知 handle 也应查看这些上下文；它不代替其他对象的 `client read` 或全图依赖检查。支持的单 Place 单字段非覆盖补充用[managed 指南](CLIENT_GUIDE.md)的 `prepare-place`；同源多字段或多 Place 补充优先用 `prepare-request`，批量来源与 Note 去重见[内容指南](CONTENT_COLLECTION_GUIDE.md#把资料写回正确对象)。纠正、availability、旧 GuideNote 和安排调整按匹配的专业指南构造**原公开 request**，用同一 managed 目录的 `prepare-request`/`commit`；若窄入口返回 `unsupported`，当前 state/canonical 不变。`prepare-request` 仍执行原领域校验、origin、冲突和保护。
 
 ```sh
 "$SKILL_DIR/scripts/travel-handbook" client read "/absolute/output/managed handbook" --type place
@@ -88,11 +92,13 @@ SKILL_DIR="/absolute/path/to/travel-handbook-builder-skill"
 
 ## 调整与查看结果
 
-调整现有安排时保留身份：`client read` 当前 Item、Day 与必要依赖 → 以当前 revision 写最小原公开请求 → `client prepare-request` 审阅 → `client commit` 同一 operation → 读回并核对网页。移动、重排、撤下、Trip/Day 日期变化或局部 Route 替换先读[安排编辑指南](ARRANGEMENT_EDIT_GUIDE.md)；普通未排日期 Item 见[待排指南](UNASSIGNED_ITEM_GUIDE.md)，时间约束见[时间指南](TIME_PLAN_GUIDE.md)。不要删除重建模拟移动，也不要因日程变化自动改变预订、付款、班次等现实承诺。
+调整现有安排时保留身份：`client read` 当前 Item、Day 与必要依赖 → 以当前 revision 写最小原公开请求 → `client prepare-request` 审阅 → `client commit` 同一 operation → 读回并核对网页。移动、重排、撤下、Trip/Day 日期变化或局部 Route 替换先读[安排编辑指南](ARRANGEMENT_EDIT_GUIDE.md)；普通 Visit 细化为同一次 Route 先读[路线输入指南](MOVEMENT_GUIDE.md#已有-visit-原位细化为-route)；普通未排日期 Item 见[待排指南](UNASSIGNED_ITEM_GUIDE.md)，时间约束见[时间指南](TIME_PLAN_GUIDE.md)。不要删除重建模拟移动，也不要因日程变化自动改变预订、付款、班次等现实承诺。
 
 `plan.withdraw` 撤下安排但保留相关历史与现实承诺；`guide.note.update` 更正说明；`clear_related` 仅解除说明关联。三者都不是彻底删除。没有公开删除方法的对象（如 Source、GuideNote、Place）不能以撤下或解绑冒充删除；只承诺方法合同实际支持的效果。
 
-`client status ROOT` 报当前 state/canonical revision、发布状态和稳定路径。若 `committed=true` 但发布失败，旧网页仍可读，只重试同一 operation ID。作者写入预览与浏览器预览不同：发行包对 managed ROOT 运行 `scripts/preview-service start "/absolute/output/managed handbook" --port 0`，保存返回的 URL；续作用同一 ROOT 再次 `start`，服务保持可访问，仓库开发环境按 `docs/frontend/portable-preview.md`。打开实际 loopback 页面，检查地点简介、当天安排与新增资料；managed commit 后刷新**同一页面**。`check.valid`、export 成功或 `publish_status=current` 都不能代替网页和事实核对。
+`client status ROOT` 报当前 state/canonical revision、发布状态和稳定路径。若 `committed=true` 但发布失败，旧网页仍可读，只重试同一 operation ID。作者写入预览与浏览器预览不同：发行包对 managed ROOT 运行 `scripts/preview-service start "/absolute/output/managed handbook" --port 0`，保存返回的 URL；续作用同一 ROOT 再次 `start`，服务保持可访问，仓库开发环境按 `docs/frontend/portable-preview.md`。打开实际 loopback 页面，检查地点简介、当天安排与新增资料；managed commit 后刷新**同一页面**。若页面有展示缺口，先区分数据未采用、发布未更新和前端未显示，沿同一 managed ROOT 增量修正并如实报告；不要另写独立 HTML 维护第二份旅行事实。`check.valid`、export 成功或 `publish_status=current` 都不能代替网页和事实核对。
+
+交付前按本次范围做短核对：读回改动与未改对象；检查关键事实的来源、适用期和未知；有浏览器可用时逐页目视本次应展示的标题、安排、待办和图片，若未目视就明说；另核对交通衔接、营业和预订等现实可行性，不把结构 `check.valid` 当作这几项已通过。浏览器核对是证据层级，不是所有数据-only 任务的硬性门禁，也不能为通过检查编造时间或路线。
 
 ## 按需延伸
 
@@ -100,6 +106,7 @@ SKILL_DIR="/absolute/path/to/travel-handbook-builder-skill"
 - 尚未进入 managed 的旧调用方自管完整 state：只读[恢复/读取/预览指南](RECOVERY_READ_PREVIEW_GUIDE.md)的文件保存段；不要用于 managed ROOT。package-only 导入不能恢复旧 receipts、snapshots 或作者决策。
 - Place 内容、地址或坐标：[地点指南](LOCATION_GUIDE.md)；来源说明和 citation：[GuideNote 指南](GUIDE_NOTE_GUIDE.md)；营业影响：[营业影响指南](HOURS_IMPACT_GUIDE.md)。
 - 完整原文快照与精确 citation：[GuideNote 指南](GUIDE_NOTE_GUIDE.md#精确引用已登记原文)；稳定来源身份、字段采用与同源刷新：[来源采用指南](SOURCE_ADOPTION_GUIDE.md)。需保存完整原文时也按 Skill 路由读取来源决策指南。
-- 住宿、交通、路线、费用、预算、票券、成员、Task、Issue、图片等：只读[公共指南索引](README.md)中与本次材料匹配的部分。
+- 行前待办：只在需要建立或调整可完成的准备动作时读[Task 准备指南](TASK_PREPARATION_GUIDE.md)；现场执行提示留在相关 Item/Leg 说明。
+- 住宿、交通、路线、费用、预算、票券、成员、Issue、图片等：只读[公共指南索引](README.md)中与本次材料匹配的部分。
 
 交付时说明实际保存的 state revision、canonical 文件、网页检查结果和重要未知。结构有效、导出成功、页面可读仍不证明事实准确、来源齐全、旅行可行、已预订或可公开发布。

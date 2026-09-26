@@ -100,14 +100,55 @@ Stay 改期不移动各 Unit 的期间；Unit 改期不改 Stay。期间是否�
 
 非法输入、跨 Stay 的 Unit 编辑、未知 handle、重复 key、未处理旧夜数，都拒绝整批提交；本批之前的合法修改也不会留下。
 
+## 酒店通常入住起始时间与本次到店时刻
+
+有可靠酒店资料时，可选填写 `Place.role_details.lodging.check_in_time`，严格为 `00:00`—`23:59` 的 `HH:mm`，表示酒店当地通常入住起始时间；它不是本次到店时间。`check_in_rule` 仍是自由文本，保留提前到店、特殊房型等原有条件，不由工具解析或猜测。未知时省略，不写 `null` 或默认 `15:00`。录入该字段不强制补酒店时区；有依据才另填 Place.timezone。
+
+创建新酒店时可随既有 `place.add` 传 `role_details`，相应 `roles` 包含 `lodging`。以下时刻仅为虚构示例：
+
+```python
+{"method":"place.add", "as":"hotel", "args":{
+    "name":"示例酒店", "roles":["lodging"],
+    "role_details":{"lodging":{
+        "check_in_time":"15:00",
+        "check_in_rule":"通常15:00起入住，特殊安排以酒店确认为准"
+    }}
+}}
+```
+
+已有酒店不要重建。先用公开 `client context` / `client read` 读取当前完整角色资料；`place.update.set.role_details` **整体替换所有 role_details**，因此保留 lodging 中的 `check_in_rule`、其他子字段以及其他角色资料。下面的 `existing_role_details` 来自这次公开读取，`hotel` 是其当前 handle，酒店已声明 `lodging` 角色：
+
+```python
+role_details = {
+    **existing_role_details,
+    "lodging": {**existing_role_details.get("lodging", {}),
+                "check_in_time": "15:00"}
+}
+{"method":"place.update", "args":{
+    "target":hotel, "set":{"role_details":role_details}
+}}
+```
+
+`clear=["role_details"]` 会清掉整个角色资料对象；只撤回 `check_in_time` 时，先读回、从 lodging 中省略该键，再 `set` 完整 role_details，保留文字规则与其他字段。不接受 `null` 或点路径 clear。受管理目录用既有 `client prepare-request` 审阅后 `commit`，再读回/check；`prepare-place` 的加法白名单没有扩展，不能把角色资料塞进该窄入口。
+
 ## 把住宿办理写进日程
 
-入住、退房、寄存、早餐、出发或返回等已选安排使用显式的住宿办理方法。`action` 必须来自原材料或调用方判断，工具不从标题、purpose 或 notes 猜动作。
+入住、退房、从酒店出发或返回等已选安排使用显式的住宿安排方法。`action` 必须明确提供，工具不从标题、purpose 或 notes 猜动作。
+
+每段 Stay 的首次到酒店统一使用一个 `check_in`；当天外出后及后续住宿日回酒店用 `return`，不再另建“正式 check_in”，也不拆寄存、登记、拿房卡状态。此前已确定的到店时刻写在这个 Item 的现有 `timing` 中，不因酒店通常入住时间较晚而把首次到店自动推迟，或再补一条稍后的入住。不同酒店或不连续入住仍各有自己的 Stay。
+
+旅客标签按酒店当地时间判断：首次到店早于酒店 check-in time 显示“入住·行李寄存”；等于或晚于该时刻显示“入住”。比较使用已知 `check_in_time` 及现有 Item timing 中明确的到店时刻/时区；酒店当地上下文优先取显式 `Place.timezone`，缺省可复用同一 Stay 已明确的期间时区：`period.kind="local_dates"` 时用 `period.timezone`，已有 `period.kind="fixed"` 时用 `period.start.timezone`，不因此强制补通用地点时区。明确上下文冲突、不足、时刻未知或不确定窗口均保守显示“入住”，不取 Trip 默认或浏览器时区猜酒店当地时间。这只是攻略编排语义，不表示酒店已经办理登记、承诺寄存或允许提前进房。
+
+其他常用动作是 `check_out`（退房）和 `depart`（从住宿地出发）；例如中间住宿日的首尾可分别用 `depart`/`return`。当前字段合同只校验 `action` 为非空字符串，并未封闭成枚举；这是接口输入能力，不是另造寄存/登记/拿房卡状态的理由。已知 Stay local_dates 时，`check_in` 限入住日、`check_out` 限退房日，`depart`/`return` 必须位于含首尾的期间内；旅行首日入境、末日离境不要求人为补齐住宿首尾动作。
 
 ```python
 {"method":"stay.action.add", "as":"check-in", "args":{
-    "stay":stay, "action":"check_in", "title":"办理入住",
-    "day":check_in_day, "purpose":"领取房卡"
+    "stay":stay, "action":"check_in", "title":"入住",
+    "day":check_in_day, "purpose":"本次住宿首次到店"
+}}
+{"method":"stay.action.add", "as":"return", "args":{
+    "stay":stay, "action":"return", "title":"返回酒店",
+    "day":check_in_day, "purpose":"当日外出后返回本次住宿"
 }}
 ```
 
