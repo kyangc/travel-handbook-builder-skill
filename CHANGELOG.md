@@ -6,6 +6,20 @@
 
 本节暂无新增条目。
 
+## [0.3.5] - 2026-09-27
+
+### Fixed
+
+- 修复移动端详情在打开时先出现在上方、随后跳回底部的问题。外层原生 dialog 不再因入场中的聚焦元素而自动滚动；地点、事项、待办、交通、路线与地图详情保持从底部连续进入。
+- 保留面板内部长内容滚动、关闭后的焦点与原滚动位置，以及系统“减少动态效果”偏好；不改变动画时长、曲线和历史栈行为。
+
+### Compatibility and validation
+
+- 仅共享前端外层裁切方式修复，不改变旅行数据、公开调用方法或 1.0 合同。本站品牌图标、私人攻略、Google key 及托管站点能力不进入 Skill。
+- 在桌面 WebKit 稳定复现外层 dialog 自动滚动造成的位置跳动，修复后反馈由红转绿。84 个真实浏览器场景（WebKit/Chromium、多尺寸、六类入口、关闭重开及 reduced motion）、84 项受影响单测、默认/站点构建通过；长内容内部滚动与动态视口尺寸另有检查。
+- 本机 Chromium 未自然复现原症状，不据此限定问题只在 Safari，也不宣称用户手机 Chrome/PWA 已实机验收。原 IAB 不可读取，用户仍需刷新后复验；真实地址栏动画未在桌面模拟器完整重现。
+- 发布候选另行核对完整性、隐私隔离、确定性 ZIP 与包外入口。历史冻结评估 ZIP 缺失门禁不变，不声明 Python 全套全绿或新的自然 caller 效果。
+
 ## [0.3.4] - 2026-09-27
 
 ### Fixed
@@ -132,7 +146,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.4...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.5...HEAD
+[0.3.5]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.5
 [0.3.4]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.4
 [0.3.3]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.3
 [0.3.2]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.2

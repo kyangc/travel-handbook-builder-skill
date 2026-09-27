@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.4"
+    "version": "0.3.5"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.4",
+    "release_tag": "v0.3.5",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -75,8 +75,8 @@
     },
     {
       "path": "README.md",
-      "size": 21911,
-      "sha256": "c1fe394083d9204d6731717e35227f404604e39c8e00412951293eccb23d9110",
+      "size": 22016,
+      "sha256": "f7b3708744ab8ab89027f653d9c91ab0c14f2d15ee6c291e3288fbda1c4f0165",
       "mode": "0644"
     },
     {
@@ -614,21 +614,21 @@
       "mode": "0755"
     },
     {
-      "path": "web/assets/data-D4_9f0mG.js",
+      "path": "web/assets/data-B7QjqqfK.js",
       "size": 254156,
-      "sha256": "4012601a092bb93794b02c3ed1ac654604aaadd791040a0c0e6d8deae288bfcd",
+      "sha256": "3e4aba241367267e12297c90410d2f928734ea746ed36be3e164557e15a81f10",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-CreSF236.js",
+      "path": "web/assets/index-BMFlNQ_p.css",
+      "size": 252718,
+      "sha256": "a60d4dc5c535339b2d8114d08614e6345049d868f11b42ff490f8c74ae158866",
+      "mode": "0644"
+    },
+    {
+      "path": "web/assets/index-wF07T8TG.js",
       "size": 454479,
-      "sha256": "acc7888fe6336e369e7b26e9750af8af7c4f6b1fca06e0145362c13bb6767a1b",
-      "mode": "0644"
-    },
-    {
-      "path": "web/assets/index-o9U9T4HX.css",
-      "size": 252722,
-      "sha256": "a50589e2aa3fcfc21ebf4a196bac39700904d1cdc0d6d40da5c852692a07559e",
+      "sha256": "5e2b9aab61eef56100682c5d05a1f2d2140b618098f284889b8eb24a8e7202d3",
       "mode": "0644"
     },
     {
@@ -1834,7 +1834,7 @@
     {
       "path": "web/index.html",
       "size": 450,
-      "sha256": "b74d26d94f3971526d4d245feffafa71d941b27d7ea9482fb54ef7f3bb931e23",
+      "sha256": "57697b909e39e6a20672980488401e02b6f63ece101674b11f40e85204320fa9",
       "mode": "0644"
     }
   ]
