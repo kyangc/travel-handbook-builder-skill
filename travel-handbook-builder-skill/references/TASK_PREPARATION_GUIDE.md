@@ -10,7 +10,7 @@ Task 是需要独立处理、处理后可明确完成的行动，不是对现场
 
 标题只写简短明确的动作；截止、适用条件、凭证和需核实的细节放 `notes`，有可靠日期依据才写 `due`/`window`。`action` 表示要做的动作，`category` 表示准备主题，分别按实际语义选择，不从标题自动推断或为填字段一律写 `other`。例如“核实护照有效期”可用 `action=verify, category=documents`；“激活已选 eSIM”可用 `activate, connectivity`；“购买已决定的门票”可用 `purchase, booking`。仅知道要决定是否购票时，不能先写成 `purchase` 或声称已有订单；若已经决定购买，标题就写购买，别把“决定时间/方式”混入同一购买动作。需要先作选择时，先保留为调用方待决事项，选择明确后再建对应 Task。
 
-反例：“乘车时打开电子票”只是现场使用注意，写在该次交通 Item/Leg 的说明，不建行前 Task；若确有提前激活或购票截止，另建对应的可完成 Task 并记录期限依据。别把旅行当天执行中的每个动作都复制成待办。
+反例：“乘车时打开电子票”只是现场使用注意，写在该次交通 Item/Leg 的说明，不建行前 Task；若确有提前激活或购票截止，另建对应 Task 并记录期限依据。“建议提前订座”不等于制度强制，只有用户已选订座才建对应行动；真实强制条件须有适用依据。天气复核按临行需要保留，未知日期不编造截止时间。
 
 ## 新建准备待办
 
@@ -33,11 +33,11 @@ Task 是需要独立处理、处理后可明确完成的行动，不是对现场
 
 `category` 只接受模型已有的 `documents`、`clothing`、`health_supplies`、`connectivity`、`equipment`、`booking`、`verification`、`other`。省略不会自动填 `other`；不适用某一主题时可省略，而不是为每条 Task 强制分类。
 
-`preparation.item_label` 必填且非空。quantity 与 unit 必须同时出现，quantity 大于 0；两者都省略表示数量没有记录，不默认 0 或 1。购买和装包是两个动作，只有原材料明确表达两者及依赖时才创建两个 Task。
+`preparation.item_label` 必填且非空。quantity 与 unit 必须同时出现，quantity 大于 0；两者都省略表示数量没有记录，不默认 0 或 1。装包先核对已有物品，缺少且已决定添置才建采购；装备建议不一律变购物清单。上例仅适用于材料明确要求购买、装包及两者依赖的情况。
 
 `depends_on` 只接受 Task handle，按首次出现去重。不存在引用、自依赖和直接或间接循环会使整批失败。依赖省略表示没有记录，不证明现实中相互独立。
 
-`checklist` 是非空的 `{key,title}` 列表，每项初态 open。key 只为本动作回执和批内引用命名，不导出到领域包；清单项的领域记录只有 id、title、status。
+`checklist` 是非空的 `{key,title}` 列表，每项初态 open。key 只为本动作回执和批内引用命名，不导出到领域包；清单项的领域记录只有 id、title、status。汇报待办进度时说明统计是否含父任务与子清单：例如一个装包 Task 下的三项物品不等于四个独立决策，界面行数不能直接当作决策负担或计算错误的证据。
 
 ## 清单句柄与受限修改
 
@@ -104,6 +104,8 @@ Task 是需要独立处理、处理后可明确完成的行动，不是对现场
 
 ## 完成、依赖提示与重开
 
+用户说“已完成”时，先读 Task 定义与清单，只完成明确确认的范围。出票不等于已值机；网络已备不等于电子票已登录。有清单时用 `task.amend.checklist_edits` 只更新对应项；无对应项则按已知事实原位厘清任务范围并保留未完成动作，不为关闭整项而缩掉范围。整项确认后才用 `task.complete`，其必填 `record_note` 只记这次确认的完成事实，不猜凭证、完成时间或供应方核验。
+
 只要仍有 open 清单项，`task.complete` 就以 `TASK_CHECKLIST_OPEN` 原子拒绝。done 与 not_needed 清单项均视为已处理。
 
 若依赖 Task 仍为 open，调用方明确提交的完成事实仍会保存；回执、check 与 export validation 同时返回 `TASK_DEPENDENCY_OPEN`，列出未完成的直接依赖。该提示不会完成上游、恢复下游为 open 或传播状态。依赖已 done 或 not_needed 时没有这项提示。
@@ -122,7 +124,7 @@ done Task 不能修改 title、action、targets、category、preparation、depen
 
 ## 明确撤下不再需要的 Task
 
-仅在明确知道**整个当前 Task** 不再需要时，使用原 Task handle 调用：
+仅在明确知道**整个当前 Task** 不再需要时，使用原 Task handle 调用。例：用户已决定当天现场购票，先用 `plan.update.set.notes` 等对应公开入口保留当天说明及必要条件，再撤下原“提前购票”Task，理由写“改为当天现场办理，无需行前购买”，不能标 done 或声称已购。只有“现场可买”的资料还不等于用户选择；部分清单不再需要时只改该项为 `not_needed`，保留其余行动。
 
 ```python
 {"method": "task.retire", "args": {

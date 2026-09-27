@@ -2,6 +2,7 @@
 import copy
 
 from .errors import fail, nonempty
+from url_checks import local_media_locator, web_url
 
 
 REPRESENTATIONS = {'photo', 'illustration', 'schematic'}
@@ -74,6 +75,8 @@ def media_image_add(editor, *, locator, alt, representation, creation=None,
                     caption=None, usages=None):
     _require_current_schema(editor)
     nonempty(locator, 'locator')
+    if not (web_url(locator, image=True) or local_media_locator(locator)):
+        fail('INVALID_URL', 'Image locator must be HTTPS or a safe local path without traversal', parameter='locator')
     nonempty(alt, 'alt')
     if not isinstance(representation, str) or representation not in REPRESENTATIONS:
         fail('INVALID_ARGUMENT', 'Unknown image representation',

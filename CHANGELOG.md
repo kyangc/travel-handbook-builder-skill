@@ -6,6 +6,26 @@
 
 本节暂无新增条目。
 
+## [0.3.1] - 2026-09-27
+
+### Fixed
+
+- Source URL 与图片 locator 保留原文，Unicode/空格在显示边界编码，已有转义与查询参数保持；新写入非法地址拒绝，历史坏地址给局部诊断，不再因单个资源地址阻断整份攻略。
+- managed 预览正常 stop→start 保留外部 media-root 配置；提供显式更换/清除和失效提示。只读 preview-status 识别实际包、服务与前端资源，不能把版本号或旧 tab 当成已刷新证明。
+- 日程路段解释收进所属详情，统一弹层与关注点响应式布局；Google AdvancedMarker 使用当前标准点击事件并清理监听，OSM 测试等待真实 marker 就绪。
+
+### Changed
+
+- 新增只读 `read --report map-coverage`，按日完整分页核对地点、入口、候选与路径的输入/投影缺口，不自动选点或增加门禁。
+- `read` / `client read --omit-capabilities` 显式省略重复能力元数据，默认输出保持；错误提供不猜测对象的恢复路径。
+- 指南收敛地点介绍、当天节奏、本次选择与来源说明，明确 Task 完成范围、现场办理撤下及候选采纳边界；素材盘点同时分页 Place/Media，避免遗漏未绑定介绍图的地点。
+
+### Compatibility and validation
+
+- 继续使用 `1.0` profile；保留原身份、来源和未知项。使用更新后的运行时与网页消费新增 URL 合同；旧版严格校验器不保证接受这些来源地址。
+- 当前候选通过 Web、构建/包完整性与隐私、受影响测试及包外公开入口验收。Python 完整首跑的两个过时文案断言已修后通过，另两项历史冻结 ZIP 缺失仍保留原失败门禁，不宣称全套全绿。
+- 未开展新的自然 caller 效果/效率实验。真实鉴权 Google SDK、原 in-app browser 问题、远程素材可用性/许可和旅行事实仍有独立验收边界；发布不代表本机已安装或真实攻略已更新。
+
 ## [0.3.0] - 2026-09-26
 
 ### Changed
@@ -66,7 +86,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.0
 [0.2.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.2.0
 [0.1.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.1.0

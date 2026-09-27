@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.0"
+    "version": "0.3.1"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.0",
+    "release_tag": "v0.3.1",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -20,7 +20,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "file_count": 292,
+    "file_count": 295,
     "scope": "all skill files except MANIFEST.json and generated .venv"
   },
   "entrypoints": {
@@ -75,14 +75,14 @@
     },
     {
       "path": "README.md",
-      "size": 18706,
-      "sha256": "fc711d547fab1b61061f2d9cb4a44f7094d018c3a557d0fd018089ec5725da1a",
+      "size": 21116,
+      "sha256": "43a750eff3a713df2247c4b9f004cde4620151375ac69f84870374f1fd7fb9fd",
       "mode": "0644"
     },
     {
       "path": "SKILL.md",
-      "size": 14175,
-      "sha256": "f074e8ea2a8accf5f91b0d987dfc17d723e8bc0cd54fc73dabea18912d9a2a6c",
+      "size": 14862,
+      "sha256": "bdb2aa76a156b1662539c27bb37758f0a138030c0831986e09f3de487ce27a7b",
       "mode": "0644"
     },
     {
@@ -111,14 +111,14 @@
     },
     {
       "path": "references/CLIENT_GUIDE.md",
-      "size": 12101,
-      "sha256": "e31802f7c77805218be11425536d3a6da3237b55314648118d6b4eea44a51d78",
+      "size": 14006,
+      "sha256": "7a7c92ad244c7d8e74a0b5f5995596239abc5ba6b0baedf40a4f36819dc469d0",
       "mode": "0644"
     },
     {
       "path": "references/CONTENT_COLLECTION_GUIDE.md",
-      "size": 28380,
-      "sha256": "69335ce1f90ed2cab84cd1487679201b673ec0c22534404e8eb7202518638e85",
+      "size": 28950,
+      "sha256": "30dd685cb54fa46e0d937629c954674f5dae3b53f15cd42bd1525696dea57777",
       "mode": "0644"
     },
     {
@@ -135,8 +135,8 @@
     },
     {
       "path": "references/GUIDE_NOTE_GUIDE.md",
-      "size": 6604,
-      "sha256": "ac706891470864ca44bc8dbc7d567b4634ae9396b5adaac337a586752c0210b7",
+      "size": 7156,
+      "sha256": "d8205082296190b40e89d16705998a07e05865a15a720ff69e190042ca6f61e2",
       "mode": "0644"
     },
     {
@@ -158,9 +158,15 @@
       "mode": "0644"
     },
     {
+      "path": "references/MAP_COVERAGE_GUIDE.md",
+      "size": 3278,
+      "sha256": "76f4b571aca6c488637797d598e9cf69fb4910c97b8f5800d47f4b38d64de541",
+      "mode": "0644"
+    },
+    {
       "path": "references/MEDIA_GUIDE.md",
-      "size": 6634,
-      "sha256": "0a92e459ca23292ba9a71a825d821b53603226c4b7f341efd72d174a1790409e",
+      "size": 10814,
+      "sha256": "2d79b8c07c0f175795e53b5ce599bfa3f844023620c76320e7252b53e3133eaa",
       "mode": "0644"
     },
     {
@@ -243,8 +249,8 @@
     },
     {
       "path": "references/TASK_PREPARATION_GUIDE.md",
-      "size": 10897,
-      "sha256": "d65fd587809ebb24ad1c512e68fe8bf3587c1211a8fb584b3bfa3bf476e8ea03",
+      "size": 12215,
+      "sha256": "aa73fc6ea3c1f133bd28ed56b5aa658b2ba79ea936cb74805e8d25bfca54da8b",
       "mode": "0644"
     },
     {
@@ -285,8 +291,8 @@
     },
     {
       "path": "runtime/authoring/__main__.py",
-      "size": 9111,
-      "sha256": "4802ab1baf6799babc1de7dcf2390830dda1fa9f377caa74e78f7687deba41fd",
+      "size": 11741,
+      "sha256": "871df860fc3c41dafb1c66ad25a30d63b17ea21b6d77e20d11bab903b39b7ad2",
       "mode": "0644"
     },
     {
@@ -309,8 +315,8 @@
     },
     {
       "path": "runtime/authoring/client.py",
-      "size": 48443,
-      "sha256": "09e3f4fd1c2fa5e25812b7db032c19e0209046e92ca636c122216d346540059e",
+      "size": 49290,
+      "sha256": "151f2c8d3189cb3061ba8d2b0be9e9167a892b1e33f9e99693329d81ded91f1c",
       "mode": "0644"
     },
     {
@@ -321,8 +327,8 @@
     },
     {
       "path": "runtime/authoring/core.py",
-      "size": 92698,
-      "sha256": "41ceac95d7d7fd8c6cd767293cdf7a67537831473de6dd9606b62d2db66c932c",
+      "size": 93955,
+      "sha256": "2babfc038a90c224d0c32503a15bb786bf569a10ff23fc8d28e644db34656ee2",
       "mode": "0644"
     },
     {
@@ -351,8 +357,8 @@
     },
     {
       "path": "runtime/authoring/guide_notes.py",
-      "size": 5050,
-      "sha256": "d618881a58e966526f4ad9eab1613822ebcdd75db1ea28cd1dcf90001256f52b",
+      "size": 5263,
+      "sha256": "8ca0512b275bc8c1eabd46c611bab683b3bd5dd475ea6a8711ac937aaf561ce7",
       "mode": "0644"
     },
     {
@@ -380,9 +386,15 @@
       "mode": "0644"
     },
     {
+      "path": "runtime/authoring/map_coverage.py",
+      "size": 18849,
+      "sha256": "3c6dde8ec382455006bb646e71b4456fe0c7f5ce4040ecc656be6648cfdf6f04",
+      "mode": "0644"
+    },
+    {
       "path": "runtime/authoring/media.py",
-      "size": 6464,
-      "sha256": "48200e2d47a5e9b319659974128e2e474cb79daa3582414e1270c815d29c3492",
+      "size": 6710,
+      "sha256": "11154e2d3ecbaf4b55aef64a0e5b43e3612bf5f7d9655cebc0c0dfe8ed7a5106",
       "mode": "0644"
     },
     {
@@ -489,8 +501,8 @@
     },
     {
       "path": "runtime/schemas/v1/records.schema.json",
-      "size": 56209,
-      "sha256": "795c068e343bd6f314465eca5de329bd9cdc8b55e635437e7151b87ff529ec16",
+      "size": 56400,
+      "sha256": "13933f2e0aade9334301c3437564d1f61766b5b1e267b7048f7c5dc6e3ef755d",
       "mode": "0644"
     },
     {
@@ -542,9 +554,15 @@
       "mode": "0644"
     },
     {
+      "path": "runtime/scripts/url_checks.py",
+      "size": 3446,
+      "sha256": "b34a0e31a960d5a7c37bc8e4f38ce6e93a456659a7f92ce2ab9e6cafd814e189",
+      "mode": "0644"
+    },
+    {
       "path": "runtime/scripts/validate_trip.py",
-      "size": 6761,
-      "sha256": "c7fc9154e108e636cdcdc083b5e3ca1f0e29ef7c209033ac084c8c3e02472675",
+      "size": 6846,
+      "sha256": "efc1aa38a92fbd784133b72fbbe7ebadc9d89e45c6ff37a9629cd5b349873813",
       "mode": "0644"
     },
     {
@@ -561,14 +579,14 @@
     },
     {
       "path": "scripts/preview_server.py",
-      "size": 16037,
-      "sha256": "4adcee8f680b4a94ed564ad236731d101d162eeb741c26b431a9efa69bb30160",
+      "size": 18268,
+      "sha256": "8a0e7fc1111a376657d7f69162a830b7dd636c05a78c0191c134cfcba5e35350",
       "mode": "0755"
     },
     {
       "path": "scripts/preview_service.py",
-      "size": 21452,
-      "sha256": "5814e27572ecdbf1b3e759d0eaffa13919789ec0af69be31c096646b96bc0e0a",
+      "size": 25415,
+      "sha256": "ff4f4fa13a87ec7bb9eaa50860ca370640f6bc313e81e38396978741cd440f7f",
       "mode": "0755"
     },
     {
@@ -596,21 +614,21 @@
       "mode": "0755"
     },
     {
-      "path": "web/assets/data-DhEgu5fJ.js",
-      "size": 252713,
-      "sha256": "3a1141bffdca717795b4898f6a2e93f69e175d68851771370774f18bca28f716",
+      "path": "web/assets/data-B2v19GkY.js",
+      "size": 254156,
+      "sha256": "59eea983620156bdba6107b82a56d118a090619273a1e80892801b4d79f9c693",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-C4R01WdJ.js",
-      "size": 449907,
-      "sha256": "9ca7b4eaab426f02ebe61a920d2957e7f9e368fe83a0cd0a2fc616301685f4a6",
+      "path": "web/assets/index-CPsr88rL.js",
+      "size": 450046,
+      "sha256": "7f2d861ddb777f06d2402a26cba998f0183d2eb24f676ced44d249dab8883034",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-Hu6WDtKa.css",
-      "size": 251994,
-      "sha256": "ed07e3ac4d5fe266cc3f78cd75433ec89595012a8e8f36317bbf224b30674ce0",
+      "path": "web/assets/index-ElZokBhL.css",
+      "size": 252329,
+      "sha256": "c4d60b68f514d9edc9c4cfdac159cca24841bd5818ce8c6c3d0a7adf6eb19fc6",
       "mode": "0644"
     },
     {
@@ -1816,7 +1834,7 @@
     {
       "path": "web/index.html",
       "size": 450,
-      "sha256": "cdbdea4120b0256826ffdec44cf91126e144804efd159ff6bb135827e9a04d54",
+      "sha256": "2c6b69f5f80eff1aaef7cba37e6f00ae78a14f3cdc32fe71b7a16934d40c6b75",
       "mode": "0644"
     }
   ]

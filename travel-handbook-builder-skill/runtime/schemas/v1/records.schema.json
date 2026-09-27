@@ -1428,7 +1428,8 @@
         },
         "url": {
           "type": "string",
-          "format": "uri"
+          "minLength": 1,
+          "description": "Original recorded source address, preserved verbatim. HTTP(S) usability is diagnosed separately; unusable historical addresses do not invalidate the source record."
         },
         "published_at": {
           "oneOf": [

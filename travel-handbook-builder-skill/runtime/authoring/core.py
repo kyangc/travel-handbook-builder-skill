@@ -418,11 +418,13 @@ def _normalize_selection(state, selection):
         day = _handle_name(selection['day'], 'selection.day')
         ref = state['handles'].get(day)
         if ref is None:
-            fail('REFERENCE_NOT_FOUND', 'Selected Day handle is not in this workspace',
-                 parameter='selection.day')
+            fail('REFERENCE_NOT_FOUND', 'selection.day requires a current Day handle, not a date or name',
+                 parameter='selection.day',
+                 recovery_hint='Read with types=["day"], follow pagination, then use the returned handle whose record.date matches your intended day.')
         if ref.get('type') != 'day':
             fail('REFERENCE_KIND_MISMATCH', 'selection.day must identify a Day',
-                 parameter='selection.day')
+                 parameter='selection.day', actual_type=ref.get('type', ref.get('kind')),
+                 recovery_hint='Read with types=["day"], then select a returned Day handle.')
         result['day'] = day
     if 'types' in selection:
         values = selection['types']
@@ -537,9 +539,16 @@ def _direct_handle_links(state, entries):
 
 
 def read_workspace(state, selection=None, limit=None, cursor=None,
-                   include_source_text=False):
+                   include_source_text=False, report=None, include_capabilities=True):
     """Small first-slice read surface; handles survive process restarts."""
     check_workspace(state)
+    if type(include_capabilities) is not bool:
+        fail('INVALID_ARGUMENT', 'include_capabilities must be boolean', parameter='include_capabilities')
+    if report is not None:
+        if report != 'map-coverage':
+            fail('INVALID_ARGUMENT', 'Unknown read report; supported: map-coverage', parameter='report')
+        from .map_coverage import read_map_coverage
+        return read_map_coverage(state, selection, limit, cursor, include_source_text)
     local_mode = (selection is not None or limit is not None or cursor is not None
                   or include_source_text is not False)
     objects = []
@@ -572,6 +581,10 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
         'title': state['title'], 'objects': objects,
         'capabilities': {'schema_versions': list(SUPPORTED_SCHEMA_VERSIONS), 'new_trip_schema_version': '1.0',
             'write_methods': sorted(METHODS),
+            'read_reports': {'map-coverage': {
+                'filters': ['day'], 'default_limit': READ_DEFAULT_LIMIT, 'max_limit': READ_MAX_LIMIT,
+                'read_only': True, 'scope': 'current_state_projection_not_sdk_or_network',
+                'guide': 'authoring/MAP_COVERAGE_GUIDE.md'}},
             'coordinate_inputs': COORDINATE_INPUTS, 'batch': 'atomic', 'concurrency': 'single_writer',
             'recovery': {'state': 'full_authoring_context',
                          'canonical_package_import': 'domain_values_without_authoring_metadata'},
@@ -601,6 +614,8 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
     if 'import_report' in state:
         full['import_report'] = state['import_report']
     if not local_mode:
+        if not include_capabilities:
+            full.pop('capabilities')
         return copy.deepcopy(full)
     if type(include_source_text) is not bool:
         fail('INVALID_ARGUMENT', 'include_source_text must be boolean',
@@ -654,6 +669,8 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
         snapshots = state.get('source_imports', {}).get('snapshots', {}).values()
         result['source_texts'] = [copy.deepcopy(snapshot) for snapshot in snapshots
                                   if snapshot.get('source', {}).get('handle') in source_handles]
+    if not include_capabilities:
+        result.pop('capabilities')
     return copy.deepcopy(result)
 
 

@@ -4,6 +4,7 @@ import json
 
 from .errors import fail, nonempty
 from .source_refresh import locate
+from url_checks import web_url
 
 
 SOURCE_KINDS = {
@@ -22,6 +23,8 @@ def source_record(editor, *, kind, title, url=None, published_at=None, notes=Non
     if not isinstance(kind, str) or kind not in SOURCE_KINDS:
         fail('INVALID_ARGUMENT', 'Unknown Source kind', parameter='kind')
     nonempty(title, 'title')
+    if url is not None and web_url(url) is None:
+        fail('INVALID_URL', 'Source URL must be a usable HTTP(S) address without credentials or malformed escapes', parameter='url')
     fields = {'kind': kind, 'title': title}
     for name, value in (('url', url), ('notes', notes)):
         if value is not None:

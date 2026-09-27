@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 import tempfile
 
@@ -47,12 +48,19 @@ def write_json(path, value, *, replace):
 
 
 def add_read_options(command):
-    command.add_argument('--day')
-    command.add_argument('--type', dest='types', action='append')
-    command.add_argument('--handle', dest='handles', action='append')
+    command.add_argument('--report', choices=['map-coverage'],
+                         help='Read-only Day/Place/Stop/Recommendation/AccessPoint/Path coverage; paginate rows with --cursor')
+    command.add_argument('--day', metavar='DAY_HANDLE',
+                         help='Current Day handle, not a date/name; first read --type day and follow pagination')
+    command.add_argument('--type', dest='types', action='append', metavar='OBJECT_TYPE',
+                         help='Model object type such as day, place, task, media, transport_service; repeatable')
+    command.add_argument('--handle', dest='handles', action='append', metavar='OBJECT_HANDLE',
+                         help='Current handle of any object; repeatable')
     command.add_argument('--limit', type=int)
     command.add_argument('--cursor')
     command.add_argument('--include-source-text', action='store_true')
+    command.add_argument('--omit-capabilities', action='store_false', dest='include_capabilities',
+                         help='Omit only repeated capability metadata; keep full objects, related handles, revision and pagination. Default includes capabilities.')
 
 
 def read_options(args):
@@ -64,7 +72,9 @@ def read_options(args):
     local = bool(selection or args.limit is not None or args.cursor is not None
                  or args.include_source_text)
     return {'selection': selection if local else None, 'limit': args.limit,
-            'cursor': args.cursor, 'include_source_text': args.include_source_text}
+            'cursor': args.cursor, 'include_source_text': args.include_source_text,
+            **({'include_capabilities': False} if not args.include_capabilities else {}),
+            **({'report': args.report} if args.report is not None else {})}
 
 
 def parser():
@@ -100,11 +110,12 @@ def parser():
     client_source = client_init.add_mutually_exclusive_group(required=True)
     client_source.add_argument('--state', type=Path)
     client_source.add_argument('--package', type=Path)
-    client_context = client_commands.add_parser('context')
+    client_context = client_commands.add_parser('context',
+        description='Place-only context. Use --handle PLACE_HANDLE or --name PLACE_NAME; --target is not supported. For other objects use client read ROOT --handle OBJECT_HANDLE.')
     client_context.add_argument('root', type=Path)
     client_target = client_context.add_mutually_exclusive_group(required=True)
-    client_target.add_argument('--handle')
-    client_target.add_argument('--name')
+    client_target.add_argument('--handle', metavar='PLACE_HANDLE', help='Current Place handle only')
+    client_target.add_argument('--name', metavar='PLACE_NAME', help='Exact Place name; ambiguity is reported, never guessed')
     client_context.add_argument('--source-text', dest='source_text_handles', action='append')
     client_read = client_commands.add_parser('read')
     client_read.add_argument('root', type=Path)
@@ -185,11 +196,30 @@ def execute(args):
             'manifest': artifact['manifest'], 'validation': artifact['validation']}, 0
 
 
+def _read_recovery(result, args, argv):
+    """Attach executable argument lists without resolving dates/names or guessing intent."""
+    if args is not None and result.get('parameter') == 'selection.day':
+        prefix = ['client', 'read', str(args.root)] if args.command == 'client' else ['read', str(args.state)]
+        result['recovery'] = {'argv': [*prefix, '--type', 'day', '--limit', '50'],
+                              'then': 'Follow pagination, choose the returned handle by record.date, and retry --day DAY_HANDLE.'}
+    if (result.get('code') == 'INVALID_CLI' and argv[:2] == ['client', 'context']
+            and any(value == '--target' or value.startswith('--target=') for value in argv[2:])):
+        result['message'] = '--target is not supported; client context accepts --handle PLACE_HANDLE or --name PLACE_NAME'
+        result['parameter'] = '--target'
+        result['recovery_hint'] = 'context is Place-only. For other objects use client read ROOT --handle OBJECT_HANDLE. No target was inferred.'
+        if len(argv) > 2 and not argv[2].startswith('-'):
+            result['recovery'] = {'argv': ['client', 'context', argv[2], '--help']}
+    return result
+
+
 def main(argv=None):
+    argv = list(sys.argv[1:] if argv is None else argv)
+    args = None
     try:
-        result, status = execute(parser().parse_args(argv))
+        args = parser().parse_args(argv)
+        result, status = execute(args)
     except core.AuthoringError as error:
-        result, status = error.as_dict(), 1
+        result, status = _read_recovery(error.as_dict(), args, argv), 1
     except OSError as error:
         result, status = {'committed': False, 'code': 'IO_ERROR', 'message': str(error)}, 1
     except Exception as error:

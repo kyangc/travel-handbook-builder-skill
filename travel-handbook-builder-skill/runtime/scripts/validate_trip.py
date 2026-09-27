@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 from model_checks import check_package, coverage_plan_issues
 from time_constraints import evaluate_constraint
 from time_checks import time_diagnostics
+from url_checks import url_diagnostics
 from domain_checks import (cross_field_errors, shopping_place_warnings,
                            task_dependency_warnings, trip_range_warnings)
 
@@ -93,6 +94,7 @@ def validate(package):
             warnings.extend(coverage_plan_issues(projected, resolve))
     else:
         warnings.extend(coverage_plan_issues(package, resolve))
+    warnings.extend(url_diagnostics(package))
     warnings.extend(shopping_place_warnings(package))
     warnings.extend(task_dependency_warnings(package))
     if package.get('schema_version') in ('1.0',):

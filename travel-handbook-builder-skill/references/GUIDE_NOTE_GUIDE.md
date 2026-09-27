@@ -24,6 +24,8 @@ kind 使用 Source 既有枚举：`user_statement`、`confirmation`、`official`
 
 Source 元数据不可原位更新。需要纠正时，新建 Source，再用 `guide.note.update` 整体替换对应 paragraphs。
 
+`url` 若提供，新写入须为可用 HTTP(S) 地址，拒绝危险 scheme、凭证、控制字符、无效 host/port 和错误百分号，诊断为 `INVALID_URL`。空格／日文路径、query 与 fragment 可原样记录，前端请求时进行幂等编码，既有编码和签名 query 不重写。历史无效地址保留记录与引用，由 `check` 和前端给出 `UNUSABLE_SOURCE_URL` 并跳过链接；不阻断其他内容。详细边界与图片纠错流程见 [URL 原文、兼容与纠错](MEDIA_GUIDE.md#url-原文兼容与纠错)。
+
 普通材料出处采用 `source.record` + `guide.note.add`/`guide.note.update` 即可；只有需要原文快照、精确引用或稳定身份与字段刷新时，才分别使用下文 `source.register` 或[有界来源采用协议](SOURCE_ADOPTION_GUIDE.md)。普通引用不要求建立来源采用 binding。
 
 ## 新建全局或关联说明

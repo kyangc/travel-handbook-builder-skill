@@ -216,14 +216,20 @@ class ManagedHandbook:
                 "report": report,
             }
 
-    def read(self, selection=None, limit=None, cursor=None, include_source_text=False):
+    def read(self, selection=None, limit=None, cursor=None, include_source_text=False, report=None,
+             include_capabilities=True):
         """Read the current managed state through the public authoring surface."""
         with locked(self.root):
-            state, _, _ = self._validated_state_and_canonical()
-            return read_workspace(
+            state, canonical, _ = self._validated_state_and_canonical()
+            result = read_workspace(
                 state, selection=selection, limit=limit, cursor=cursor,
-                include_source_text=include_source_text,
+                include_source_text=include_source_text, report=report,
+                include_capabilities=include_capabilities,
             )
+            if report is not None:
+                result['canonical_revision'] = canonical['revision']
+                result['publish_status'] = _publish_status(state['revision'], canonical['revision'])
+            return result
 
     def _read_pages(self, state, object_type):
         objects = []
@@ -272,6 +278,11 @@ class ManagedHandbook:
                                           handle=target["handle"]) from error
                     raise
                 candidates = [entry for entry in direct["objects"] if entry["type"] == "place"]
+                if not candidates and direct['objects']:
+                    raise ClientError('TARGET_KIND_MISMATCH', 'client context supports Place only; use client read for this object',
+                                      expected_type='place', actual_type=direct['objects'][0]['type'],
+                                      handle=target['handle'],
+                                      recovery={'argv': ['client', 'read', str(self.root), '--handle', target['handle']]})
                 place_pages = 1
             else:
                 places, place_pages = self._read_pages(state, "place")

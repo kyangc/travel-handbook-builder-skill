@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -18,6 +19,7 @@ from urllib.parse import unquote, urlsplit
 SKILL_DIR = Path(__file__).resolve().parents[1]
 ASSET_DIR = SKILL_DIR / "web"
 RUNTIME_SCRIPTS = SKILL_DIR / "runtime" / "scripts"
+SERVER_SHA256 = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
 sys.path.insert(0, str(RUNTIME_SCRIPTS))
 
 try:
@@ -111,6 +113,37 @@ def safe_asset(path: str) -> Path | None:
     return candidate
 
 
+def preview_identity() -> dict:
+    """Report current public asset bytes, without paths or private configuration."""
+    assets = {}
+    for path in sorted(ASSET_DIR.rglob("*")):
+        relative = path.relative_to(ASSET_DIR).as_posix()
+        candidate = safe_asset("/" + relative)
+        if candidate is not None:
+            assets["web/" + relative] = hashlib.sha256(candidate.read_bytes()).hexdigest()
+    digest = hashlib.sha256(json.dumps(assets, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    package = None
+    manifest_sha256 = None
+    matches = None
+    manifest_path = SKILL_DIR / "MANIFEST.json"
+    if manifest_path.is_file() and not manifest_path.is_symlink():
+        raw = manifest_path.read_bytes()
+        manifest = json.loads(raw)
+        if not isinstance(manifest, dict):
+            raise ValueError("invalid manifest")
+        declared = manifest.get("package", {})
+        if not isinstance(declared, dict):
+            raise ValueError("invalid package metadata")
+        package = {key: declared.get(key) for key in ("name", "version")}
+        manifest_sha256 = hashlib.sha256(raw).hexdigest()
+        expected = {entry["path"]: entry["sha256"] for entry in manifest.get("files", [])
+                    if entry["path"].startswith("web/")}
+        matches = assets == expected
+    return {"package": package, "manifest_sha256": manifest_sha256,
+            "server_sha256": SERVER_SHA256, "frontend_sha256": digest,
+            "frontend_files": len(assets), "frontend_matches_manifest": matches}
+
+
 IMAGE_TYPES = {
     ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
     ".gif": "image/gif", ".webp": "image/webp", ".avif": "image/avif",
@@ -146,8 +179,8 @@ def media_payload(export_path: Path, media_root: Path | None,
     candidate = original if original.is_absolute() else export_path.parent / original
     resolved = candidate.resolve()
     roots = [export_path.parent.resolve()]
-    if media_root is not None:
-        roots.append(media_root.resolve())
+    if media_root is not None and media_root.resolve() == media_root:
+        roots.append(media_root)
     if not any(root in resolved.parents for root in roots):
         return None
     suffix = resolved.suffix.lower()
@@ -252,6 +285,15 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if not self.request_origin_is_allowed():
             return
         path = self.request_path()
+        if path == "/api/preview-status":
+            try:
+                payload = (json.dumps(preview_identity(), sort_keys=True) + "\n").encode()
+            except (OSError, ValueError, KeyError, TypeError):
+                self.send_problem(HTTPStatus.SERVICE_UNAVAILABLE, "preview identity unavailable")
+                return
+            self.send_payload(HTTPStatus.OK, payload, "application/json; charset=utf-8",
+                              cache_control="no-store")
+            return
         if path == "/api/handbook":
             try:
                 payload = api_payload(self.server.export_path)
@@ -296,7 +338,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
         if not self.request_origin_is_allowed():
             return
         path = self.request_path()
-        if path in ("/api/handbook", "/api/map-config"):
+        if path in ("/api/handbook", "/api/map-config", "/api/preview-status"):
             self.send_problem(
                 HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed",
                 allow="GET", include_body=False,
@@ -331,7 +373,7 @@ class PreviewHandler(BaseHTTPRequestHandler):
     def method_not_allowed(self) -> None:
         if not self.request_origin_is_allowed():
             return
-        allow = "GET" if self.request_path() == "/api/handbook" else "GET, HEAD"
+        allow = "GET" if self.request_path() in ("/api/handbook", "/api/map-config", "/api/preview-status") else "GET, HEAD"
         self.send_problem(HTTPStatus.METHOD_NOT_ALLOWED, "method not allowed", allow=allow)
 
     do_POST = method_not_allowed

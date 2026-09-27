@@ -131,6 +131,47 @@ def write_record(path: Path, record: dict) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def read_media_config(path: Path, root: Path) -> dict | None:
+    try:
+        metadata = path.lstat()
+    except FileNotFoundError:
+        return None
+    if (not stat.S_ISREG(metadata.st_mode) or metadata.st_uid != os.getuid()
+            or metadata.st_mode & 0o077):
+        raise ServiceError("media configuration is not a private, owned regular file")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, ValueError) as error:
+        raise ServiceError("media configuration is invalid; use start --media-root or --clear-media-root to replace it") from error
+    if (not isinstance(value, dict) or value.get("root") != str(root)
+            or "media_root" not in value
+            or (value["media_root"] is not None
+                and (type(value["media_root"]) is not str or not Path(value["media_root"]).is_absolute()))):
+        raise ServiceError("media configuration has an invalid shape or ROOT; use start --media-root or --clear-media-root")
+    return value
+
+
+def save_media_config(path: Path, root: Path, media_root: Path | None) -> None:
+    write_record(path, {"root": str(root), "media_root": str(media_root) if media_root else None})
+
+
+def runtime_probe(port: int, instance: str) -> dict | None:
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
+    try:
+        connection.request("GET", "/api/preview-status")
+        response = connection.getresponse()
+        body = response.read()
+        if response.status == 200 and response.getheader("X-Travel-Preview-Instance") == instance:
+            value = json.loads(body)
+            if isinstance(value, dict):
+                return value
+    except (OSError, ValueError, http.client.HTTPException):
+        pass
+    finally:
+        connection.close()
+    return None
+
+
 def read_map_config(path: Path) -> dict:
     try:
         metadata = path.lstat()
@@ -270,6 +311,7 @@ def service_status(root: Path, control: Path, record: dict | None) -> dict:
         return result
     result["owned"] = True
     result["revision"] = probe[2]
+    result["runtime"] = runtime_probe(record["port"], record["instance"])
     if (data_error is not None or managed["publish_status"] != "current"
             or probe[0] != 200 or probe[2] != managed["canonical_revision"]):
         result["state"] = "stale_data"
@@ -289,19 +331,26 @@ def ready_line(log: Path) -> dict | None:
 
 
 def start(root: Path, control: Path, record_path: Path, requested_port: int | None,
-          allow_new_url: bool, media_root: Path | None) -> dict:
+          allow_new_url: bool, media_root: Path | None, clear_media_root: bool = False) -> dict:
     existing = read_record(record_path)
-    if existing is not None and media_root is None and existing.get("media_root"):
-        media_root = Path(existing["media_root"])
-        if not media_root.is_dir():
-            raise ServiceError("recorded media root is no longer an existing directory")
     current = service_status(root, control, existing)
+    if current["state"] == "identity_mismatch":
+        raise ServiceError("service identity mismatch; refusing takeover")
+    config_path = control / "media.json"
+    explicit_media = media_root is not None or clear_media_root
+    config = None if explicit_media else read_media_config(config_path, root)
+    if not explicit_media:
+        saved = config["media_root"] if config is not None else existing.get("media_root") if existing else None
+        media_root = Path(saved) if saved else None
+    if media_root is not None and (not media_root.is_dir() or media_root.resolve() != media_root):
+        raise ServiceError("saved media root is missing or changed; stop any running service, then start --media-root DIRECTORY or --clear-media-root")
     if existing is not None:
         if current["state"] == "ready":
             if (str(media_root) if media_root else None) != existing.get("media_root"):
                 raise ServiceError("media root differs from the existing service; stop it before changing the root")
             if requested_port not in (None, 0, existing["port"]):
                 raise ServiceError("requested port differs from the existing service URL")
+            save_media_config(config_path, root, media_root)
             current["reused"] = True
             return current
         if current["owned"]:
@@ -316,6 +365,15 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
     export = root / "private-handbook.json"
     if export.is_symlink() or not export.is_file():
         raise ServiceError("managed canonical must be a regular non-symlink file")
+    if not explicit_media and config is None and media_root is None:
+        package = json.loads(export.read_text(encoding="utf-8"))
+        if any(item.get("kind") == "image" and item.get("usages")
+               and isinstance(item.get("locator"), str)
+               and not item["locator"].startswith("//")
+               and Path(item["locator"]).is_absolute()
+               and not Path(item["locator"]).is_relative_to(root)
+               for item in package.get("media", [])):
+            raise ServiceError("external media has no saved configuration; start --media-root DIRECTORY to restore access, or --clear-media-root to disable it")
     port = existing["port"] if existing else (8765 if requested_port is None else requested_port)
     if existing and allow_new_url:
         if requested_port is None:
@@ -378,6 +436,7 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
         result = service_status(root, control, record)
         if not result["ready"]:
             raise ServiceError("managed data changed during startup; check status")
+        save_media_config(config_path, root, media_root)
         result["reused"] = False
         result["url_changed"] = bool(existing and existing["url"] != result["url"])
         if result["url_changed"]:
@@ -411,6 +470,11 @@ def stop(root: Path, control: Path, record_path: Path) -> dict:
     # Recheck immediately before signalling: PID alone is never sufficient.
     if birth_identity(record["pid"]) != record["birth"]:
         raise ServiceError("process birth identity changed; refusing to signal")
+    # Migrate an older live instance before deleting its process record. Existing
+    # configuration (even damaged configuration) must not prevent an owned stop.
+    config_path = control / "media.json"
+    if not os.path.lexists(config_path):
+        save_media_config(config_path, root, Path(record["media_root"]) if record.get("media_root") else None)
     os.kill(record["pid"], signal.SIGTERM)
     deadline = time.monotonic() + 5
     while time.monotonic() < deadline:
@@ -430,14 +494,19 @@ def parser() -> argparse.ArgumentParser:
                         help="start port (default 8765; 0 chooses an available port)")
     result.add_argument("--new-url", action="store_true",
                         help="explicitly choose a new URL after the previous process has died")
-    result.add_argument("--media-root", type=Path,
+    media = result.add_mutually_exclusive_group()
+    media.add_argument("--media-root", type=Path,
                         help="additional local image directory outside the canonical directory")
+    media.add_argument("--clear-media-root", action="store_true",
+                       help="start without an additional image directory and persist that choice")
     return result
 
 
 def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
+        if args.action != "start" and (args.media_root is not None or args.clear_media_root):
+            raise ServiceError("--media-root and --clear-media-root apply only to start")
         root = root_path(args.root)
         media_root = args.media_root.expanduser().resolve() if args.media_root else None
         if media_root is not None and not media_root.is_dir():
@@ -474,7 +543,7 @@ def main(argv: list[str] | None = None) -> int:
                 result = {"asked": config["asked"], "configured": bool(config.get("key")),
                           "skipped": config["asked"] and not bool(config.get("key"))}
             elif args.action == "start":
-                result = start(root, control, record, args.port, args.new_url, media_root)
+                result = start(root, control, record, args.port, args.new_url, media_root, args.clear_media_root)
             elif args.action == "stop":
                 result = stop(root, control, record)
             else:
