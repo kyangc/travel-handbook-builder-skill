@@ -6,6 +6,19 @@
 
 本节暂无新增条目。
 
+## [0.3.2] - 2026-09-27
+
+### Changed
+
+- 日程中的“其他兴趣点”采用更紧凑的桌面与中屏缩略图；手机继续上图下文，图片高度适应屏幕。已在当天日程地点卡出现的同一地点不再重复显示，其他日期及未采纳的推荐保留。
+- GitHub 主页改为中文产品介绍，加入真实页面截图、简短开始步骤及自然语言示例；技术用法与详细验证边界通过专门文档链接查看。截图使用完全虚构的演示资料与自制示意插图，不包含私人旅行资料。
+
+### Compatibility and validation
+
+- 本次不改变旅行数据、公开调用方法或 1.0 数据合同。受影响的 60 项日程测试、构建和响应式页面检查通过。
+- 发布候选已校验 ZIP、公开文件、图片链接、隐私和包外入口。既有 Python 全套中两个历史冻结 ZIP 缺失保持原失败门禁，不宣称全套全绿。
+- 不新增自动规划、订票或事实核实能力，不声明自然 caller 效果或效率提升；实际攻略升级、真实地图服务、外部素材和旅行事实仍单独核对。
+
 ## [0.3.1] - 2026-09-27
 
 ### Fixed
@@ -86,7 +99,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.2...HEAD
+[0.3.2]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.2
 [0.3.1]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.0
 [0.2.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.2.0

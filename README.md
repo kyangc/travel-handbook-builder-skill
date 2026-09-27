@@ -1,119 +1,59 @@
-# Travel Handbook Builder Skill
+# 旅册 · Travel Handbook Builder
 
-把用户提供的旅行资料转换成**私有、结构化、可持续编辑**的旅行手册工作区。
+**把散落的旅行资料，整理成一本能随时翻看、继续修改的私人旅行手册。**
 
-This repository contains the public release of the `travel-handbook-builder-skill` agent skill. It is designed for agents that need to preserve explicit travel facts, unknowns, sources, revisions, and decisions without silently inventing plans or booking status.
+给支持 Skill 的 AI 助手一份行程、一段笔记，或几轮对话。它可以借助旅册整理每天的安排、收藏的地点、住宿与出发前待办，并在浏览器里呈现。你决定去哪、怎么走；旅册帮助你把决定和仍待确认的事记清楚。
 
-## 它解决什么问题
+[下载最新版本](https://github.com/kyangc/travel-handbook-builder-skill/releases/latest) · [开始使用](#开始使用) · [更新记录](CHANGELOG.md)
 
-普通旅行文档很容易在多轮修改中丢失来源、覆盖人工决定，或把“推荐”“参考价”“已预订”“已付款”混为一谈。这个 Skill 提供一套受约束的本地编制运行时，让 Agent 可以：
+![桌面日程：左侧当天安排，右侧其他兴趣点](docs/screenshots/itinerary.png)
 
-- 从 Markdown 或 JSON 旅行资料创建 typed handbook；
-- 保存完整 state，并在新会话中无损续编；
-- 渐进补充日期、地点、成员、路线、住宿、费用、任务和来源；
-- 区分推荐与正式安排、参考报价与本次费用、费用与付款；
-- 保留未知值，不用猜测补齐缺失信息；
-- 在写入前 preview，并在写入后 read、check 和私有 export；
-- 使用稳定 request ID 和调用方保存的 request journal 安全重放。
+*页面截图均来自实际运行的旅册。这里的「青湾慢游」是虚构演示，风景为自制示意插图，不代表真实地点或可执行行程。*
 
-运行时不会替用户选择目的地、酒店、航班、餐厅或路线，也不会执行现实预订、付款、公开发布或事实核验。
+## 一份攻略，从出发前用到旅途中
 
-## 仓库内容
+- **把一天看清楚。** 按天查看已安排的活动与交通，点开地点了解介绍和补充说明。
+- **收藏和安排各有位置。** 想去的地方留在“其他兴趣点”，不会因为被收藏就变成当天必去。
+- **重要信息放在一起。** 住宿、往返交通和准备清单集中查看，不必在多份聊天记录里来回翻找。
+- **计划变了，可以接着改。** 保存本地旅行工作区，下次让助手继续补充或更正，保留已经确认的内容。
+- **没确定的，就保持待确认。** 推荐、安排、预订与付款分别记录；缺少的信息不会悄悄变成“已完成”。
 
-```text
-travel-handbook-builder-skill/
-├── travel-handbook-builder-skill/   # 可直接安装的完整 Skill
-│   ├── SKILL.md
-│   ├── README.md                # 运行环境与 API 使用说明
-│   ├── references/              # 面向 Agent 的公开调用指南
-│   ├── runtime/                 # 本地 authoring 运行时与 Schema
-│   ├── scripts/                 # setup、CLI、Python wrapper、完整性校验
-│   ├── requirements.txt
-│   └── MANIFEST.json
-├── CHANGELOG.md                 # 对外发布记录
-├── RELEASING.md                 # 维护与发布流程
-└── tools/                       # manifest 与确定性 ZIP 构建工具
-```
+## 从每天的节奏，看到一个地点的细节
 
-开发路线图、内部实验、评分器、私有旅行数据、历史会话和验收原始日志不属于发布仓库。
+桌面日程把已安排的活动和其他兴趣点放在同一页。0.3.2 缩小了右侧图片；同一天已在日程地点卡出现的地点，不再重复占据兴趣点列表。
 
-## 安装
+手机也可以阅读这份手册，点开卡片查看介绍、游览建议和待确认事项。
 
-要求 Python 3.12+ 和 POSIX shell。首次 setup 需要从已配置的包索引或缓存安装依赖。
+<img src="docs/screenshots/mobile-detail.png" alt="手机地点详情：示意图、地点介绍与游览建议" width="390">
 
-```sh
-git clone https://github.com/kyangc/travel-handbook-builder-skill.git
-cd travel-handbook-builder-skill
+## 开始使用
 
-python3 travel-handbook-builder-skill/scripts/verify_bundle.py
-python3 travel-handbook-builder-skill/scripts/setup_runtime.py
-```
+旅册是提供给 AI 助手的 **Skill**，需要配合 Codex、Kimi CLI 或其他支持本地 Skill 的工具使用。运行环境为 Python 3.12+ 与 POSIX shell（如 macOS、Linux）；首次初始化需要安装运行依赖。
 
-setup 只会在 Skill 目录中创建 `.venv`，不会修改全局 Python 环境。
+1. 从 [Releases](https://github.com/kyangc/travel-handbook-builder-skill/releases/latest) 下载 ZIP 并解压，保留完整的 `travel-handbook-builder-skill` 文件夹。
+2. 按 [安装指南](travel-handbook-builder-skill/README.md#requirements-and-isolated-setup) 完成校验、初始化，并让你的 AI 助手加载该 Skill。
+3. 把旅行资料保存在你自己的本地目录，在新对话里让助手开始整理。
 
-### Kimi CLI
+可以这样说：
 
-仓库根目录就是 skills parent directory：
+> 请用 travel-handbook-builder-skill，把这份行程笔记整理成私人旅行手册，并打开本地预览。保留我已经确定的安排，推荐地点单独列出；没有确认的时间、预订和费用不要补猜。
 
-```sh
-kimi --skills-dir "$(pwd)"
-```
+之后继续补充：
 
-随后可以直接提出自然语言任务，例如：
+> 请继续修改这份手册：把第二天下午留空，把美术馆先放进其他兴趣点。其他已经确定的内容保持不变，告诉我还有哪些信息待确认。
 
-> 请根据 source.md 中明确的旅行资料创建可继续编辑的结构化攻略。保留未知，不新增原文没有的预订、付款或安排。把完整状态、私有导出、请求日志和逐项对账保存到 output/。
+旅行资料与工作区放在 Skill 安装目录之外，方便续作与备份。具体加载方式、恢复与命令说明见 [使用指南](travel-handbook-builder-skill/README.md)。
 
-### Codex 或其他 Agent
+## 适合什么，不代替什么
 
-把完整目录 `travel-handbook-builder-skill/` 放入 Agent 的 skills 目录。不要只复制 `SKILL.md`；公开指南、运行时、Schema、启动器和 manifest 都是 Skill 合同的一部分。首次使用前在目标机器运行上面的完整性校验和 setup，或按 [Skill README](travel-handbook-builder-skill/README.md) 使用已有的合适 Python 环境。
+适合把已有资料逐步整理为清楚、可继续编辑的旅行手册，也适合边讨论边补充尚未确定的行程。浏览器预览在本机运行；分享链接、跨设备访问与公开托管不属于默认交付。
 
-在新的 Codex 任务中可用自然语言指向你**本地私有**的旧行程 Markdown，例如：
+它不会替你作出最终旅行选择、订票、付款，也不保证营业时间、价格、交通接驳或外部图片始终有效。出行前仍需核实关键事实；AI 助手整理出的结果也需要你审阅。选择云端 AI 助手时，资料如何发送和保存仍取决于该工具，不能把“本地手册”理解成所有处理都离线。
 
-> 请用 travel-handbook-builder-skill 根据这份旧行程 Markdown 建立可继续编辑的私人攻略，并给我原目录下的预览。保留原文已确定的事实与未决项，不自行替我选新地点、路线、预订或付款；说明实际写入、尚未确认和页面核验到哪一层。
+本版截图展示的是合成示例与已实现页面，不是对任意真实旅行、所有设备或助手表现的保证。版本变化和具体验证边界见 [CHANGELOG](CHANGELOG.md)。
 
-旅行资料、完整 state 和导出应留在安装目录之外。这个示例只说明用法，不代表对任意真实资料的重建已通过验收。
+## 进一步了解
 
-## 命令行快速检查
+[完整安装与使用说明](travel-handbook-builder-skill/README.md) · [给 AI 助手的入口](travel-handbook-builder-skill/SKILL.md) · [贡献说明](CONTRIBUTING.md) · [维护与发布](RELEASING.md)
 
-启动器可以从任意当前目录调用：
-
-```sh
-SKILL_DIR="/absolute/path/to/travel-handbook-builder-skill"
-
-"$SKILL_DIR/scripts/travel-handbook" --help
-"$SKILL_DIR/scripts/travel-handbook" create "/work/trip-state.json" \
-  --title "Example trip" --example
-"$SKILL_DIR/scripts/travel-handbook" read "/work/trip-state.json"
-"$SKILL_DIR/scripts/travel-handbook" check "/work/trip-state.json"
-```
-
-创建写请求前阅读 [Caller Guide](travel-handbook-builder-skill/references/CALLER_GUIDE.md)。完整安装、CLI 和 Python API 说明见 [Skill README](travel-handbook-builder-skill/README.md)。
-
-## 关键产物
-
-- **完整 state**：后续续编的唯一无损输入，包含 handle、回执、来源快照和决策元数据。
-- **canonical private export**：可由 `import_package` 重新导入的领域包。
-- **request journal**：调用方保存的成功原始请求，用于精确重放；它不属于旅行领域 state。
-- **reconciliation**：原资料每一项进入 typed 记录、保留为说明或成为明确缺口的对账。
-
-请把旅行 state、导出和来源文件保存在安装目录之外。它们可能包含姓名、日期、位置、订单或其他个人信息，默认应视为私有数据。
-
-## 验证范围
-
-**0.3.1** 修复 URL 接受/显示一致性与预览媒体根恢复，补充地图覆盖只读报告、显式精简 CLI 元数据、分层详情和指南。Web、构建、完整性/隐私及包外公开入口已验；Python 全套中两个过时文案断言修后通过，另两项历史冻结 ZIP 缺失保留原失败门禁，不能称全套全绿。本轮不声明自然 caller 效果或效率提升；真实鉴权 Google SDK、原 in-app browser 环境和远程素材条件仍未复验，发布也不表示本机已安装或既有攻略已更新。
-
-0.3.0 引入有理由的 Task 撤下、显式 Route Stop 遭遇类型及酒店当地入住起始时间等能力。首次到店仅在明确可比较的早到时间下显示“入住·行李寄存”，不推断进房或重排日程。既有独立 caller 在 GuideNote 重复及日期归属仍有部分失败；后续确定性副本修复和指南静态检查不证明自主行为效果。
-
-0.2.0 发布当时的工程验收包括：以已提交开发源构建候选，核对公开仓库与 release ZIP 同一 manifest/字节，检查私有资料和凭据排除、安装或已配置 Python 的 CLI 路径，以及受影响业务回归。此前的外部 Agent 单例与 0.1.0 Kimi 冻结集分别属于其当时的包和题目；**0.2.0 发布当时，其 release asset 尚未完成新会话 Codex 真实旧行程 Markdown 重建**。当时该真实案例安排在0.2.0发布后另报业务结果、页面证据和未测边界；这里保留当时的验收范围，不将后续其他版本的结果归作0.2.0通过，也不由单例推普遍可靠性。若未来某版要声明新的自然发现或跨场景能力，应为该声明冻结相应的新会话行为验收；不能因本版验证方式改变而取消必要的安全、正确性或来源核对。
-
-公开版从开发仓库的已验收实现确定性生成，并把内部 Schema 演进历史收敛为单一稳定数据契约 1.0。公开调用方无需执行版本升级，也不会看到开发阶段的多个 draft Schema 目录。
-
-## 发布与贡献边界
-
-这个仓库只在 Skill 对外版本变化时更新。行为、公开指南、运行依赖、Schema、安装体验或发布元数据的变化应进入 [CHANGELOG](CHANGELOG.md)。内部研究记录和具体旅行材料不会迁入。
-
-维护约定见 [RELEASING.md](RELEASING.md)，贡献范围见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-## License
-
-原创内容使用 [MIT License](LICENSE)。第三方依赖与归属见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+开源许可：[MIT](LICENSE)。第三方组件与归属：[THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md)。
