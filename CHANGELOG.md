@@ -6,6 +6,25 @@
 
 本节暂无新增条目。
 
+## [0.3.3] - 2026-09-27
+
+### Fixed
+
+- 图片加载失败时保留原有占位尺寸并提供局部重试；原本没有图片的内容保持简洁。地图加载设有超时、失败提示与恢复操作，快速切换日期时清理旧任务，不再无限等待或让旧结果覆盖当前日程。
+- 待办勾选无法保存到浏览器时明确提示未保存，并允许重试；同一次页面会话内切换栏目仍保留勾选，按旅行隔离。正常保存不增加打断阅读的提示。
+- 地点、任务、交通、事项和地图详情使用可中断的进出动效；快速关闭重开、重复按 Escape、嵌套地图内地点详情和浏览器返回只处理相应层级，并恢复焦点与滚动位置。
+
+### Changed
+
+- 手机详情随短内容自然收缩，长内容最多约占屏幕高度的 90%，适配安全区；桌面详情保持便于阅读的宽度。控件按下即时反馈，选中日期保持可见，地图悬停只高亮，点击或键盘操作才打开信息。
+- 尊重系统“减少动态效果”偏好，取消详情位移及地图飞行动画；离线打开外部链接时提供局部提示，链接目标保持不变。
+
+### Compatibility and validation
+
+- 不改变旅行数据、公开调用方法或 1.0 数据合同；独立托管的多旅行站点、鉴权与离线下载不包含在本 Skill 中。
+- 集成 Web 检查通过 231 项、跳过 5 项既有私人样本检查；构建及使用合成资料的 Chromium 行为检查通过。真实 iOS/Safari、Google 鉴权服务及外部素材可用性仍需单独验收。
+- 发布候选另行核对包完整性、确定性 ZIP、隐私隔离及包外入口。既有历史冻结评估 ZIP 缺失的门禁不变，不声明 Python 全套全绿或自然 caller 效果提升。
+
 ## [0.3.2] - 2026-09-27
 
 ### Changed
@@ -99,7 +118,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.2...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.3...HEAD
+[0.3.3]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.3
 [0.3.2]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.2
 [0.3.1]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.1
 [0.3.0]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.0

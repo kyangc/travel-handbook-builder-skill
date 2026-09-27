@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.2"
+    "version": "0.3.3"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.2",
+    "release_tag": "v0.3.3",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -75,8 +75,8 @@
     },
     {
       "path": "README.md",
-      "size": 21226,
-      "sha256": "c81bc8ce0f9c6623903268226d1c39ac312307530c6fed3bcbfd0097d79652a7",
+      "size": 21556,
+      "sha256": "7f2d51c11957e2babac669b964c83ea7ec1fb746aaa3fb10b4416390505f9de9",
       "mode": "0644"
     },
     {
@@ -614,21 +614,21 @@
       "mode": "0755"
     },
     {
-      "path": "web/assets/data-BMABt9ap.js",
+      "path": "web/assets/data-CKktN-_q.js",
       "size": 254156,
-      "sha256": "76e94356e629bb2def5c870f32fbd99e84514c1d65855e64f8d47ff458c960ff",
+      "sha256": "55fe20073d3fe95a29353cebbef95a757e92d1c4e568979b3b8c5fe2418beaa9",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-8dLie_8t.js",
-      "size": 450365,
-      "sha256": "23943f85e72c842295fb100bb9100a72cd5e4c42165c210d88f6994d2f733af5",
+      "path": "web/assets/index-B13sabBu.css",
+      "size": 252707,
+      "sha256": "03bdadf205ea2bc4e7cd22712480feca570f9e22ea5cec6ebaf4b1360b28f31d",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-BG_JOABt.css",
-      "size": 251616,
-      "sha256": "b8819abcb75bb5cc043a5b18882ee90dbbac838e2f78292273095c1dac9b0f1e",
+      "path": "web/assets/index-BLfcACK7.js",
+      "size": 455463,
+      "sha256": "0e6010b698b28dc6ec2bad8565e0cf2da88473fbecaa765bcfea159cf79af116",
       "mode": "0644"
     },
     {
@@ -1834,7 +1834,7 @@
     {
       "path": "web/index.html",
       "size": 450,
-      "sha256": "4bd78a7fc13ea0148238a65c521ce7ce29933818d0cd846740c5bb6dba8293b3",
+      "sha256": "caa5cd430bfdd77506e239dedeffb828007224d11479cf5ef38a8ed03d477c32",
       "mode": "0644"
     }
   ]
