@@ -12,6 +12,6 @@
 
 Path 资料与实际显示分别报告。没有 Path 时可能显示两端点示意线；这仍是 `missing_path`，不构成徒步导航。已有 Path 也不证明可通行、实时有效或覆盖全程；多 part 标记 `continuity_not_assessed`。Route 总览 Path 优先时分段线被过滤，报告保留其原因和原绑定；`path_usage=segments` 使用分段线。
 
-本报告只证明**当前 state 按既有前端口径可投影哪些点／线**。managed 输出另标 canonical revision 与 publish_status；stale 时网页可能仍是旧版。实际 Google/OSM SDK 渲染、图瓦／网络、现实入口和路线可行性均为 not_assessed。没有浏览器访问、点位搜索、坐标转换、自动选点、路径生成或候选采纳。
+本报告只证明**当前 state 按既有前端口径可投影哪些点／线**。managed 输出另标 canonical revision 与 publish_status；stale 时网页可能仍是旧版。实际 Google 底图或自有地点示意的渲染、图瓦／网络、现实入口和路线可行性均为 not_assessed。没有浏览器访问、点位搜索、坐标转换、自动选点、路径生成或候选采纳。
 
 实现取舍：便携 Python 运行时不依赖 Node／浏览器，无法直接执行 TypeScript 投影。报告只镜像稳定的地理关系子集，以跨语言合成契约测试逐日比较当前 `buildHandbook` 的 points／lines；改地图关联或线选择规则时必须同步这些测试，不维护第二套旅客 UI。

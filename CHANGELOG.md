@@ -6,6 +6,20 @@
 
 本节暂无新增条目。
 
+## [0.3.4] - 2026-09-27
+
+### Fixed
+
+- Google Maps 缺配置、加载/鉴权失败或浏览器离线时，不再自动请求公共 OpenStreetMap 瓦片，避免服务封禁图片被当作底图呈现。部分错误图片即使返回 HTTP 403 或 200 仍能被浏览器解码，不能仅靠图片 load 事件判断地图可用。
+- fallback 保留手册自有地点、线段及交互，明确显示“地点示意，底图暂不可用”；可在线重试 Google，或打开外部 Google 地图。浏览器恢复在线后可重新加载地图。
+
+### Compatibility and validation
+
+- Google 优先需要用户自行配置、正确限制且获授权的 Maps JavaScript API 浏览器 key；本 Skill 不附带 key，也不替用户开通或支付 Google 服务。没有配置时仍可查看地点示意，**不提供真实离线底图**。既有无 key / `provider: osm` 响应可继续消费，但显示为无底图示意。
+- 不改变旅行数据、公开调用方法或 1.0 数据合同。独立托管站点的鉴权、离线下载与生产 key 配置不进入 Skill。
+- 73 项受影响地图/日程测试、Web 构建及合成资料的真实 Chromium 回放通过；HTTP 403/200 错误图片场景均不再引入外部瓦片。其他安装环境的 Google 权限、真实 iOS/Safari、外部事实与素材仍需分别核验，不以 stub 或当前站点验收替代。
+- 发布候选另行校验完整性、隐私、确定性 ZIP 和包外入口。历史冻结评估 ZIP 缺失门禁不变，不声明 Python 全套全绿或自然 caller 效果提升。
+
 ## [0.3.3] - 2026-09-27
 
 ### Fixed
@@ -118,7 +132,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.3...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.4...HEAD
+[0.3.4]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.4
 [0.3.3]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.3
 [0.3.2]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.2
 [0.3.1]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.1

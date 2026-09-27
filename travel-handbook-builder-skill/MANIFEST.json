@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.3"
+    "version": "0.3.4"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.3",
+    "release_tag": "v0.3.4",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -75,14 +75,14 @@
     },
     {
       "path": "README.md",
-      "size": 21556,
-      "sha256": "7f2d51c11957e2babac669b964c83ea7ec1fb746aaa3fb10b4416390505f9de9",
+      "size": 21911,
+      "sha256": "c1fe394083d9204d6731717e35227f404604e39c8e00412951293eccb23d9110",
       "mode": "0644"
     },
     {
       "path": "SKILL.md",
-      "size": 14862,
-      "sha256": "bdb2aa76a156b1662539c27bb37758f0a138030c0831986e09f3de487ce27a7b",
+      "size": 14990,
+      "sha256": "6ba363c8e23eab91f6404f220df205eb9ad8ab0cfb0f7b3f94ec83c648f5e20b",
       "mode": "0644"
     },
     {
@@ -159,8 +159,8 @@
     },
     {
       "path": "references/MAP_COVERAGE_GUIDE.md",
-      "size": 3278,
-      "sha256": "76f4b571aca6c488637797d598e9cf69fb4910c97b8f5800d47f4b38d64de541",
+      "size": 3300,
+      "sha256": "4952d21bfc485db329688953cccd51abfaeffd136c6cbbfe722566e0ab7cb1b9",
       "mode": "0644"
     },
     {
@@ -614,21 +614,21 @@
       "mode": "0755"
     },
     {
-      "path": "web/assets/data-CKktN-_q.js",
+      "path": "web/assets/data-D4_9f0mG.js",
       "size": 254156,
-      "sha256": "55fe20073d3fe95a29353cebbef95a757e92d1c4e568979b3b8c5fe2418beaa9",
+      "sha256": "4012601a092bb93794b02c3ed1ac654604aaadd791040a0c0e6d8deae288bfcd",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-B13sabBu.css",
-      "size": 252707,
-      "sha256": "03bdadf205ea2bc4e7cd22712480feca570f9e22ea5cec6ebaf4b1360b28f31d",
+      "path": "web/assets/index-CreSF236.js",
+      "size": 454479,
+      "sha256": "acc7888fe6336e369e7b26e9750af8af7c4f6b1fca06e0145362c13bb6767a1b",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-BLfcACK7.js",
-      "size": 455463,
-      "sha256": "0e6010b698b28dc6ec2bad8565e0cf2da88473fbecaa765bcfea159cf79af116",
+      "path": "web/assets/index-o9U9T4HX.css",
+      "size": 252722,
+      "sha256": "a50589e2aa3fcfc21ebf4a196bac39700904d1cdc0d6d40da5c852692a07559e",
       "mode": "0644"
     },
     {
@@ -1834,7 +1834,7 @@
     {
       "path": "web/index.html",
       "size": 450,
-      "sha256": "caa5cd430bfdd77506e239dedeffb828007224d11479cf5ef38a8ed03d477c32",
+      "sha256": "b74d26d94f3971526d4d245feffafa71d941b27d7ea9482fb54ef7f3bb931e23",
       "mode": "0644"
     }
   ]
