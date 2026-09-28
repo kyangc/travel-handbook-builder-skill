@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.7"
+    "version": "0.3.8"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.7",
+    "release_tag": "v0.3.8",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -75,8 +75,8 @@
     },
     {
       "path": "README.md",
-      "size": 6206,
-      "sha256": "54dad6dedb7aaad75fee4733c57b4ad61bbd6c487ed513c8c09510c9d5b09bf9",
+      "size": 6243,
+      "sha256": "56b5c4d62d7d3b2805787430b54b91d0d476ddd33f16ea471253c7a351d8dd4c",
       "mode": "0644"
     },
     {
@@ -87,8 +87,8 @@
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "size": 10261,
-      "sha256": "bba701fd6b20b8ac6bf5e4f3aa4bc92d0b1c168ee48778d94a63d556c78103af",
+      "size": 10319,
+      "sha256": "37a42240c6763c04dcea99b1b02b9721cf3f89c93ad75300d70fec8dd712898e",
       "mode": "0644"
     },
     {
@@ -632,21 +632,21 @@
       "mode": "0755"
     },
     {
-      "path": "web/assets/data-B9Ltin5y.js",
+      "path": "web/assets/data-CDQyGVqE.js",
       "size": 254695,
-      "sha256": "aa49c772b26663761bf1cb6cd81badf49e161275635dfc7ee8429b30f28bfe4b",
+      "sha256": "3d242862de167cc629de7dfdfc32fb90edc60da1c4285e524eaeaaeae26406e3",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-BehL2Vlz.js",
-      "size": 471472,
-      "sha256": "adc1cdfd46bf8ee520ef9073b45b0524451054d4cb0d5794c82292c76142cec9",
+      "path": "web/assets/index-SLbm8qLO.js",
+      "size": 471566,
+      "sha256": "7899426842bed4f156e4972162e32a3bad90918edce9eb130edd464af309d257",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-C2BxXyyM.css",
-      "size": 256267,
-      "sha256": "dc18ecc2ba5d9f14c9aac576f9915abb18496d5c08ae1d285c07a89032c5700d",
+      "path": "web/assets/index-og2Kx_6q.css",
+      "size": 256333,
+      "sha256": "8c4cdcd345a43381137a81c45a371cc6784ed78bc157e68aab5d62d7fe36fbb7",
       "mode": "0644"
     },
     {
@@ -1852,7 +1852,7 @@
     {
       "path": "web/index.html",
       "size": 450,
-      "sha256": "9ff35441b4d6d5eea286a89b28b9a0f17d6d5ce0e99d0d1f9a5a3fbd3af0509d",
+      "sha256": "47f939a1beaeb92aae837c6e30cdac03cf22b2fc3b35f58655ae59a46444cd8f",
       "mode": "0644"
     }
   ]

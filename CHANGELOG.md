@@ -6,6 +6,17 @@
 
 本节暂无新增条目。
 
+## [0.3.8] - 2026-09-29
+
+### Changed
+
+- 总览“旅途天气”标题旁统一提供一个来源信息入口，各天的总览卡不再重复显示。每日行程卡保留地点标题旁入口；复用原来源、许可、舍入说明及 hover/键盘/tap 操作，总览卡仍进入对应日程。
+
+### Compatibility and validation
+
+- 只调整来源入口位置，不改变数据合同、天气请求、离线快照、真实旅行数据或其他页面。公开包仍不包含私人站点鉴权与离线存储；原八张电脑/手机导览及完整许可文件保留。
+- 聚焦天气/总览测试、桌面与 390/320 真实 Chrome 的唯一入口、导航和来源交互、默认/站点 build 已验；正式 ZIP 另验完整性、隐私、确定性构建和包外渲染。未重复无关全套、历史截图或外部 caller，未新增真机或生产网络验收声明。
+
 ## [0.3.7] - 2026-09-28
 
 ### Added
@@ -173,7 +184,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.7...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.8...HEAD
+[0.3.8]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.8
 [0.3.7]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.7
 [0.3.6]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.6
 [0.3.5]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.5
