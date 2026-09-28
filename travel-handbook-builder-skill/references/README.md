@@ -4,6 +4,8 @@ This is the callable protocol and method inventory, not a second setup path. Sta
 
 新攻略先用既有公开 request 完成首次创建，经 `preview` 审阅、`apply`、`check` 有效后，在第一次打开网页前用[受管理客户端](CLIENT_GUIDE.md)初始化最终新目录；后续同一目录以 `client context`/`client read`/`prepare-*`/`commit` 编辑，以 `client check` 读取当前完整诊断。纠正、availability/开放时间、精确引用、旧 Note 修改和安排调整仍使用下文原专业方法**构造请求**，但在 managed 生命周期内递交；不要直改其文件或对其运行普通 `apply`。撤下和解绑不是彻底删除，未列出的删除方法不可调用。已有外部 canonical 暂不能接入这条路径。
 
+安装与解释器选择见[运行环境指南](RUNTIME_SETUP_GUIDE.md)；网页服务、Google 配置与图片目录见[浏览器预览指南](BROWSER_PREVIEW_GUIDE.md)。这两页是操作说明，不替代方法合同。
+
 ## 运行：默认路径中的公共命令
 
 安装后的 Skill 使用 `scripts/travel-handbook` 启动器；开发仓库中可等价使用 `python3 -m authoring`。下面只是命令顺序速查，具体路径、首次 request、预览审阅和失败恢复按[默认工作流](DEFAULT_WORKFLOW_GUIDE.md)，**不要整段自动提交**：

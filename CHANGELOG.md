@@ -6,6 +6,19 @@
 
 本节暂无新增条目。
 
+## [0.3.6] - 2026-09-28
+
+### Changed
+
+- 公开产品介绍、安装包入口与页面截图统一使用“行迹”品牌名称；Skill 标识 `travel-handbook-builder-skill`、命令、公开 API 与 1.0 数据合同保持不变。
+- 精简公开主页与包 README，保留截图、安装和首次使用所需提示；运行环境与本地预览服务细节通过两份随包指南查看，专业方法和恢复示例从各自指南读取。
+
+### Compatibility and validation
+
+- 本版为品牌与文档发行，不新增运行行为、依赖或托管能力。独立私人站点的品牌图标、鉴权、离线内容存储、真实攻略和 Google key 不进入 Skill。
+- 截图用完全虚构的“青湾慢游”与自制示意插图在候选网页重新拍摄，未使用私人旅行或地图凭据。候选另行检查品牌文字、文档链接、297 文件完整性、包外入口与确定性 ZIP。
+- 不新增自然 caller 成功率、旅行事实、所有设备体验或真实手机验收声明；此前各版未验边界与历史冻结评估 ZIP 缺失门禁保持原结论。
+
 ## [0.3.5] - 2026-09-27
 
 ### Fixed
@@ -146,7 +159,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.5...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.6
 [0.3.5]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.5
 [0.3.4]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.4
 [0.3.3]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.3

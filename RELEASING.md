@@ -20,7 +20,7 @@
 
 ```sh
 python3 scripts/prepare_public_release.py \
-  --version 0.3.5 \
+  --version 0.3.6 \
   --release-repo /absolute/path/to/travel-handbook-builder-skill
 ```
 
@@ -29,7 +29,7 @@ python3 scripts/prepare_public_release.py \
 ## 4. Verify generated files
 
 ```sh
-python3 tools/refresh_manifest.py --version 0.3.5 --release-tag v0.3.5
+python3 tools/refresh_manifest.py --version 0.3.6 --release-tag v0.3.6
 python3 travel-handbook-builder-skill/scripts/verify_bundle.py
 python3 travel-handbook-builder-skill/scripts/setup_runtime.py
 travel-handbook-builder-skill/scripts/travel-handbook --help
@@ -50,7 +50,7 @@ setup 后再次 verify 是必需项，用于确认正常运行没有污染受校
 
 ```sh
 python3 tools/build_release.py
-shasum -a 256 dist/travel-handbook-builder-skill-0.3.5.zip
+shasum -a 256 dist/travel-handbook-builder-skill-0.3.6.zip
 ```
 
 构建器只打包 manifest 声明的文件与 `MANIFEST.json`，使用固定时间戳和文件权限生成确定性 ZIP。
@@ -58,10 +58,10 @@ shasum -a 256 dist/travel-handbook-builder-skill-0.3.5.zip
 ## 7. Publish
 
 ```sh
-git tag -a v0.3.5 -m "travel-handbook-builder-skill v0.3.5"
+git tag -a v0.3.6 -m "travel-handbook-builder-skill v0.3.6"
 git push origin main --follow-tags
-gh release create v0.3.5 dist/travel-handbook-builder-skill-0.3.5.zip \
-  --title "travel-handbook-builder-skill v0.3.5" \
+gh release create v0.3.6 dist/travel-handbook-builder-skill-0.3.6.zip \
+  --title "travel-handbook-builder-skill v0.3.6" \
   --notes-file /path/to/release-notes.md
 ```
 
