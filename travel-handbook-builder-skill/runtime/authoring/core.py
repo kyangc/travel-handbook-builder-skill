@@ -585,6 +585,13 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
                 'filters': ['day'], 'default_limit': READ_DEFAULT_LIMIT, 'max_limit': READ_MAX_LIMIT,
                 'read_only': True, 'scope': 'current_state_projection_not_sdk_or_network',
                 'guide': 'authoring/MAP_COVERAGE_GUIDE.md'}},
+            'day_weather': {'add_parameter': 'weather_location',
+                            'canonical_field': 'weather_location_ref',
+                            'update_field': 'weather_location',
+                            'target_types': ['place', 'access_point'],
+                            'clear_field': 'weather_location',
+                            'automatic_location_selection': False,
+                            'guide': 'authoring/WEATHER_GUIDE.md'},
             'coordinate_inputs': COORDINATE_INPUTS, 'batch': 'atomic', 'concurrency': 'single_writer',
             'recovery': {'state': 'full_authoring_context',
                          'canonical_package_import': 'domain_values_without_authoring_metadata'},
@@ -772,6 +779,9 @@ def resolve_record(package, ref):
     return record
 
 
+_WEATHER_UNSET = object()
+
+
 class Editor:
     def __init__(self, state, request_id):
         self.state = state
@@ -864,8 +874,10 @@ class Editor:
                                 'end_date': end_date, 'default_timezone': default_timezone})
 
 
-    def day_add(self, *, date, timezone, title=None, summary=None):
+    def day_add(self, *, date, timezone, title=None, summary=None, weather_location=_WEATHER_UNSET):
         fields = {'date': date, 'timezone': timezone, 'item_refs': []}
+        if weather_location is not _WEATHER_UNSET:
+            fields['weather_location_ref'] = self.ref(weather_location, {'place', 'access_point'})
         if title is not None:
             nonempty(title, 'title')
             fields['title'] = title

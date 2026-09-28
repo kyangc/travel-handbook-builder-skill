@@ -449,6 +449,23 @@
         "summary": {
           "type": "string",
           "minLength": 1
+        },
+        "weather_location_ref": {
+          "allOf": [
+            {
+              "$ref": "common.schema.json#/$defs/Ref"
+            },
+            {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "place",
+                    "access_point"
+                  ]
+                }
+              }
+            }
+          ]
         }
       },
       "required": [

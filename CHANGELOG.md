@@ -6,6 +6,20 @@
 
 本节暂无新增条目。
 
+## [0.3.7] - 2026-09-28
+
+### Added
+
+- Day 可选择一个已有 Place 或 AccessPoint 作为天气地点，公开 `day.add` / `day.update` 支持选择与清除；新增天气指南与能力说明。不会从酒店、地图中心或日程顺序自动选点。
+- 网页直接查询 Open-Meteo，按 Day 日期、时区和地点显示天气、气温、风速与降雨概率。总览天气卡可进入对应日程，日程整卡可刷新；地点标题旁信息入口提供可交互的 Open-Meteo / CC BY 4.0 来源链接，支持 hover、键盘与移动 tap。
+
+### Compatibility and validation
+
+- 数据合同仍为 1.0，`Day.weather_location_ref` 为可选新增字段；旧无天气包保持有效，带字段包需 0.3.7 或更高版本支持，旧严格验证器可能拒绝新字段。预报是运行时资料，不写入 canonical。
+- 在线预报只在会话中保留，直连请求不携带本站凭据或私人 headers；免费接口限非商业使用。另行部署的站点可在用户手动保存攻略时保存绑定版本的天气，部分天气失败不阻断完整攻略；独立站点鉴权、离线存储、私人资料与 key 不进入 Skill。
+- 受影响模型、authoring、分发、Web 及 build 已验；真实 Chrome 1440/390/320 覆盖天气状态、来源交互和离线边界，旧无天气六张页面截图逐像素一致。公开坐标的一次本地浏览器直连成功，合成预报不冒充真实数据。正式 ZIP 另行核对完整性、隐私、确定性构建和包外公开入口。
+- 既有八张电脑／手机导览保留为 0.3.6 页面证据，不声称包含新天气区域。未新增自然 caller、真实手机、生产网络或真实旅行地点选定验收；历史冻结评估 ZIP 缺失门禁保持原结论。
+
 ## [0.3.6] - 2026-09-28
 
 ### Changed
@@ -159,7 +173,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.6...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.7...HEAD
+[0.3.7]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.7
 [0.3.6]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.6
 [0.3.5]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.5
 [0.3.4]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.4

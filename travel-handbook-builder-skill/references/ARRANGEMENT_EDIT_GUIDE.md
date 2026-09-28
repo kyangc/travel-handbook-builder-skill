@@ -50,7 +50,7 @@
 }}
 ```
 
-至少提供 `date`、`timezone`、`set` 或 `clear` 中的一项；`set` 只接受非空 `title`/`summary`，`clear` 只接受这两个可选字段。可只改文案，也可与日历字段同批修改；未提交字段保持。Day 的 `item_refs` 和所有 Item/Service/Stay/Task/Coverage 字段保持。日期使用 ISO 自然日，时区使用 IANA 名称。只改文案不会触发日历事实保护；混合请求中的日历变更仍受原保护并保持批次原子性。
+至少提供 `date`、`timezone`、`set` 或 `clear` 中的一项；`set` 接受非空 `title`/`summary` 或明确 `weather_location` handle，`clear` 接受这三个可选字段。天气选择/清除详见 [天气指南](WEATHER_GUIDE.md)。可只改文案，也可与日历字段同批修改；未提交字段保持。Day 的 `item_refs` 和所有 Item/Service/Stay/Task/Coverage 字段保持。日期使用 ISO 自然日，时区使用 IANA 名称。只改文案不会触发日历事实保护；混合请求中的日历变更仍受原保护并保持批次原子性。
 
 对已有 Item 而言，Day 日期或时区变化与跨日移动使用同一有限所属链事实保护。无 blocker 时允许保存，并通过时间诊断报告新的 Day 归属不一致；有 blocker 时整批拒绝，不能靠改 Day 绕过单 Item 时间保护。
 

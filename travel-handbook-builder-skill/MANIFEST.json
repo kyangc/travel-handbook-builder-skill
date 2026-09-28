@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.6"
+    "version": "0.3.7"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.6",
+    "release_tag": "v0.3.7",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -20,7 +20,7 @@
   },
   "integrity": {
     "algorithm": "sha256",
-    "file_count": 297,
+    "file_count": 298,
     "scope": "all skill files except MANIFEST.json and generated .venv"
   },
   "entrypoints": {
@@ -75,20 +75,20 @@
     },
     {
       "path": "README.md",
-      "size": 5365,
-      "sha256": "0cb3ab6767f0f03c4a8b5c50e9817d27e555928a534cf3140e7f839bbce19814",
+      "size": 6206,
+      "sha256": "54dad6dedb7aaad75fee4733c57b4ad61bbd6c487ed513c8c09510c9d5b09bf9",
       "mode": "0644"
     },
     {
       "path": "SKILL.md",
-      "size": 14990,
-      "sha256": "6ba363c8e23eab91f6404f220df205eb9ad8ab0cfb0f7b3f94ec83c648f5e20b",
+      "size": 15282,
+      "sha256": "ac9a463c612d36580dbafb3a61ac0b08a899ffcde11c60b45d1ce9522651e3a9",
       "mode": "0644"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "size": 5938,
-      "sha256": "0ab194c88ee2128bfe0a4a5149e358d0948d120630e2b739a3e0165f25e184c2",
+      "size": 10261,
+      "sha256": "bba701fd6b20b8ac6bf5e4f3aa4bc92d0b1c168ee48778d94a63d556c78103af",
       "mode": "0644"
     },
     {
@@ -99,8 +99,8 @@
     },
     {
       "path": "references/ARRANGEMENT_EDIT_GUIDE.md",
-      "size": 12334,
-      "sha256": "91c72cd7330e1269bc61df7e1225f1fbd426ee814c9ccbc6802421e0129ec444",
+      "size": 12425,
+      "sha256": "e1a95913f802a277aadcf7cc14ff94fa47f8f5c7ef9104d52013f7da119bc5af",
       "mode": "0644"
     },
     {
@@ -201,8 +201,8 @@
     },
     {
       "path": "references/README.md",
-      "size": 24824,
-      "sha256": "00dce868c4a8428954463c7b3b0122988f61d09b8dab1d33f9e82f6ac8848955",
+      "size": 24989,
+      "sha256": "755f4c93dfe8e46d8a21076e7aa00ebc6d123560a930f7e39b692ac10c15a3cb",
       "mode": "0644"
     },
     {
@@ -290,6 +290,12 @@
       "mode": "0644"
     },
     {
+      "path": "references/WEATHER_GUIDE.md",
+      "size": 1733,
+      "sha256": "a452eab818c120d0351a948bae796573c4525bf85823d816caebcb3c9a5cc8ce",
+      "mode": "0644"
+    },
+    {
       "path": "requirements.txt",
       "size": 42,
       "sha256": "0edb5ad0329400af77cd5852bae661b7db9c369bb5b37c0b74f95ca15c738313",
@@ -315,8 +321,8 @@
     },
     {
       "path": "runtime/authoring/arrangements.py",
-      "size": 20186,
-      "sha256": "e674bee27e7c1719092996e822ab55d673e695163b4b0c1b2146a9d56228c261",
+      "size": 20717,
+      "sha256": "cc710acc5f8eb297a55145fe9a5881e3207ec601f06b9b1509951fe6d2deaf32",
       "mode": "0644"
     },
     {
@@ -339,8 +345,8 @@
     },
     {
       "path": "runtime/authoring/core.py",
-      "size": 93955,
-      "sha256": "2babfc038a90c224d0c32503a15bb786bf569a10ff23fc8d28e644db34656ee2",
+      "size": 94635,
+      "sha256": "c3b4031aee0f57a496827e9f1d35c9389a56264c5325806ba832adc71a769a7e",
       "mode": "0644"
     },
     {
@@ -519,8 +525,8 @@
     },
     {
       "path": "runtime/schemas/v1/trip.schema.json",
-      "size": 18157,
-      "sha256": "da9d8109ecff1983cc4e6e2bd6aa8b73a5832fdff6cb3df91f6303b21f3bdc25",
+      "size": 18548,
+      "sha256": "76e039e4af521233fc07f911df9ed4162d4d55bd1f50ac04e3613be61851bd06",
       "mode": "0644"
     },
     {
@@ -543,8 +549,8 @@
     },
     {
       "path": "runtime/scripts/model_checks.py",
-      "size": 19073,
-      "sha256": "ef8d167ee278e91586fcdbc735eebe6b7c28daf1a93d524ac0fb9b80d357e6d0",
+      "size": 19124,
+      "sha256": "2c7753eb1399ea9e381887bc90dfe90b4a683f603a8fe3eed9739b061256c5a9",
       "mode": "0644"
     },
     {
@@ -626,21 +632,21 @@
       "mode": "0755"
     },
     {
-      "path": "web/assets/data-B7QjqqfK.js",
-      "size": 254156,
-      "sha256": "3e4aba241367267e12297c90410d2f928734ea746ed36be3e164557e15a81f10",
+      "path": "web/assets/data-B9Ltin5y.js",
+      "size": 254695,
+      "sha256": "aa49c772b26663761bf1cb6cd81badf49e161275635dfc7ee8429b30f28bfe4b",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-BMFlNQ_p.css",
-      "size": 252718,
-      "sha256": "a60d4dc5c535339b2d8114d08614e6345049d868f11b42ff490f8c74ae158866",
+      "path": "web/assets/index-BehL2Vlz.js",
+      "size": 471472,
+      "sha256": "adc1cdfd46bf8ee520ef9073b45b0524451054d4cb0d5794c82292c76142cec9",
       "mode": "0644"
     },
     {
-      "path": "web/assets/index-wF07T8TG.js",
-      "size": 454479,
-      "sha256": "5e2b9aab61eef56100682c5d05a1f2d2140b618098f284889b8eb24a8e7202d3",
+      "path": "web/assets/index-C2BxXyyM.css",
+      "size": 256267,
+      "sha256": "dc18ecc2ba5d9f14c9aac576f9915abb18496d5c08ae1d285c07a89032c5700d",
       "mode": "0644"
     },
     {
@@ -1846,7 +1852,7 @@
     {
       "path": "web/index.html",
       "size": 450,
-      "sha256": "57697b909e39e6a20672980488401e02b6f63ece101674b11f40e85204320fa9",
+      "sha256": "9ff35441b4d6d5eea286a89b28b9a0f17d6d5ce0e99d0d1f9a5a3fbd3af0509d",
       "mode": "0644"
     }
   ]

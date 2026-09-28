@@ -366,8 +366,10 @@ def day_update(editor, *, target, date=None, timezone=None, set=None, clear=None
         # Validate the descriptive edit before any calendar checks or mutation.
         candidate = {}
         edit_fields(candidate, changes=changes, clear=clear_fields,
-                    append_note=None, allowed={'title', 'summary'},
-                    clearable={'title', 'summary'})
+                    append_note=None, allowed={'title', 'summary', 'weather_location'},
+                    clearable={'title', 'summary', 'weather_location'})
+    if 'weather_location' in changes:
+        changes['weather_location'] = editor.ref(changes['weather_location'], {'place', 'access_point'})
     day_ref = editor.ref(target, {'day'})
     day = editor.record(target, {'day'})
     proposed = {
@@ -401,9 +403,13 @@ def day_update(editor, *, target, date=None, timezone=None, set=None, clear=None
     if timezone is not None:
         day['timezone'] = proposed['timezone']
     if changes or clear_fields:
-        edit_fields(day, changes=changes, clear=clear_fields,
-                    append_note=None, allowed={'title', 'summary'},
-                    clearable={'title', 'summary'})
+        stored_changes = {('weather_location_ref' if key == 'weather_location' else key): value
+                          for key, value in changes.items()}
+        stored_clear = [('weather_location_ref' if key == 'weather_location' else key)
+                        for key in clear_fields]
+        edit_fields(day, changes=stored_changes, clear=stored_clear,
+                    append_note=None, allowed={'title', 'summary', 'weather_location_ref'},
+                    clearable={'title', 'summary', 'weather_location_ref'})
     if changed:
         editor.parts['calendar_change'] = {
             'before': previous, 'after': proposed, 'changed_fields': changed}

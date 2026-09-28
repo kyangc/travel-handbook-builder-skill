@@ -10,7 +10,7 @@ LOCAL = {'unit': 'units', 'stop': 'stops', 'segment': 'segments', 'call': 'calls
 FIELD_TYPES = {
     # Schema narrows AccessPoint.place_ref to Place while TransferStep.place_ref
     # deliberately accepts either endpoint granularity.
-    'place_ref': {'place', 'access_point'}, 'parent_ref': {'place'}, 'endpoint_ref': {'place', 'access_point'},
+    'place_ref': {'place', 'access_point'}, 'parent_ref': {'place'}, 'weather_location_ref': {'place', 'access_point'}, 'endpoint_ref': {'place', 'access_point'},
     'from_ref': {'place', 'access_point', 'route', 'journey', 'activity', 'service_bundle'},
     'to_ref': {'place', 'access_point'}, 'path_ref': {'path'}, 'vehicle_ref': {'vehicle_use'},
     'service_ref': {'transport_service'}, 'rental_ref': {'service_use'},

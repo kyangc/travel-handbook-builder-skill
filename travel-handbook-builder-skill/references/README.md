@@ -67,8 +67,8 @@ Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`
 | `party.member.add` | label | age、declared_category；返回稳定 member handle |
 | `party.member.update` | target、set | label可改，年龄/原词类别只补缺失或同值 |
 | `party.group.add` | members | label；成员handle去重后建立不可变组 |
-| `day.add` | date、timezone | 非空 title/summary；顺序按添加顺序，不按日期自动重排 |
-| `day.update` | target；date/timezone/set/clear 至少一项 | set/clear 仅限 Day.title/summary；日期/时区沿用执行事实日历保护，不改 Item/Service/Stay |
+| `day.add` | date、timezone | 非空 title/summary、可选 weather_location handle；顺序按添加顺序，不按日期自动重排 |
+| `day.update` | target；date/timezone/set/clear 至少一项 | set/clear 支持 title/summary/weather_location；日期/时区沿用执行事实日历保护，不改 Item/Service/Stay |
 | `place.add` | name | roles 可省略为分类未知；restaurant 映射为 dining；可选 role_details 须与 roles 一致 |
 | `place.update` | target | set、clear、append_note、add_links、replace_weekly_hours；role_details 整体替换/清除；也保留完整 links，至少一个有效修改 |
 | `access_point.add` | place、name、kind | location、access_notes、notes；属于一个既有 Place，不从父地点继承定位 |
@@ -200,3 +200,5 @@ value.kind=exact 仅表示单一金额值；“约”的认识性质保存在 Cl
 第二例须已有或同批明确设置 `roles:["lodging","dining"]`；现有模型逐个检查角色一致性，不自动补角色。`set.role_details` 是整个对象替换，不嵌套合并：先公开读取，完整带回仍有效的兄弟字段及其他角色资料。只移除入住时间时，从读取的完整对象删除 `lodging.check_in_time` 后 `set.role_details`；`clear:["role_details"]` 清全部角色详情，保留roles。省略顶层role_details参数保留原对象；整体替换时未带回的嵌套键会移除。`check_in_time`及`update.set.role_details`不接受null，非法时间、未建模状态、点路径clear均拒绝。Python可选参数`Editor.place_add(role_details=None)`沿既有语义视为未提供；公开JSON请求仍按通用参数规则拒绝显式null。不新增寄存/登记/进房状态或动作，也不自动排序。
 
 已有adopted Claim若指向实际变化的 `role_details`、其角色子树或具体点分隔字段，修改/移除会以 `PLACE_ROLE_DETAILS_CHANGE_BLOCKED` 返回Claim引用；同值及未改变的兄弟字段不误阻，来源/Claim不会自动删掉或改写。本批不新增source field binding aspect，现有来源采用/冲突流程不被替代。受管理ROOT用现有 `client prepare-request` → `commit` 提交同一公开请求；`prepare-place` 加法白名单不扩，返回unsupported并指向 `place.update` 和此公开请求路径，canonical保持不变。
+
+- [本日主要天气地点](WEATHER_GUIDE.md)：Day 明确选择、改选或清除；天气数值不入 canonical。
