@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.9"
+    "version": "0.3.10"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.9",
+    "release_tag": "v0.3.10",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -75,14 +75,14 @@
     },
     {
       "path": "README.md",
-      "size": 2888,
-      "sha256": "a1d3035a1f0f5d614668573dfb1319536c0e3f3c583e5bc49539151a82aa1919",
+      "size": 2995,
+      "sha256": "ed1703ebae6d4296e0c30590c564523e87bcffdc19120213bb388b47d0a67dc4",
       "mode": "0644"
     },
     {
       "path": "SKILL.md",
-      "size": 5205,
-      "sha256": "e0e5bb934c9e647dacb77270593db153d4d841ad806bf10be45361a1e993ca7f",
+      "size": 5188,
+      "sha256": "bf9318bc9c99a915a3a38464a170127952c0e4041370153a4815342037d1f43d",
       "mode": "0644"
     },
     {
@@ -117,8 +117,8 @@
     },
     {
       "path": "references/CLIENT_GUIDE.md",
-      "size": 14006,
-      "sha256": "7a7c92ad244c7d8e74a0b5f5995596239abc5ba6b0baedf40a4f36819dc469d0",
+      "size": 14091,
+      "sha256": "121e0d4d9d4a367ba9d9deed08b9cbc1ddc6e4b6c1177d407cdd2673e4f3b843",
       "mode": "0644"
     },
     {
@@ -135,8 +135,8 @@
     },
     {
       "path": "references/DEFAULT_WORKFLOW_GUIDE.md",
-      "size": 5987,
-      "sha256": "4ddb2257b0514a5afa0995082a1cc850408a907f78275bf6a7c235fafc3dd9a1",
+      "size": 6263,
+      "sha256": "001e97b87148ee6eb624cd70fc0c92c116526efa59a97009f01225cb9885102c",
       "mode": "0644"
     },
     {
@@ -201,8 +201,8 @@
     },
     {
       "path": "references/README.md",
-      "size": 25065,
-      "sha256": "34d3df1555e5aa074d4cf4bb915872fc06c7cfc086af07c96636de9af10677ff",
+      "size": 22516,
+      "sha256": "e4a24fe2c7befe7085b436a2ed267b87626c29e26e1e875d18a699fffb5bcc9c",
       "mode": "0644"
     },
     {
@@ -231,8 +231,8 @@
     },
     {
       "path": "references/RUNTIME_SETUP_GUIDE.md",
-      "size": 3700,
-      "sha256": "fa8ba07c4b6487e1708f1c6db2acfab2f4e0902a8b76a18df36b7afefc264e61",
+      "size": 3828,
+      "sha256": "2d91d902ae54f2e618524efc25a8ab71c117f5bfa041755920ed43648da84110",
       "mode": "0644"
     },
     {
@@ -309,8 +309,8 @@
     },
     {
       "path": "runtime/authoring/__main__.py",
-      "size": 11741,
-      "sha256": "871df860fc3c41dafb1c66ad25a30d63b17ea21b6d77e20d11bab903b39b7ad2",
+      "size": 11764,
+      "sha256": "c55796bc89cead6cc1e7112da1cb45fceb09bb0a7ad535187dfd1a7d0b5b17c1",
       "mode": "0644"
     },
     {
@@ -333,20 +333,20 @@
     },
     {
       "path": "runtime/authoring/client.py",
-      "size": 49290,
-      "sha256": "151f2c8d3189cb3061ba8d2b0be9e9167a892b1e33f9e99693329d81ded91f1c",
+      "size": 47921,
+      "sha256": "f7db9a0be528fdb381ce8a2689d8b35facc461381e668b3c152609e591a960b3",
       "mode": "0644"
     },
     {
       "path": "runtime/authoring/coordinates.py",
-      "size": 7111,
-      "sha256": "271924f0c5945717bcb2bfa9121ac3ead9d3da6e826cdc20fe77ad7f47bcc065",
+      "size": 7120,
+      "sha256": "3fa554881076ac5b2986914dec742ec3c484c742afccb3784522700fb8849e61",
       "mode": "0644"
     },
     {
       "path": "runtime/authoring/core.py",
-      "size": 94635,
-      "sha256": "c3b4031aee0f57a496827e9f1d35c9389a56264c5325806ba832adc71a769a7e",
+      "size": 95929,
+      "sha256": "f1aa5f83cac4dc72bd02bb448be9622d59492f6eba21e4e7b92e6dc3f6a2b8e0",
       "mode": "0644"
     },
     {

@@ -5,6 +5,8 @@ import json
 
 from . import (AuthoringError, apply, check, export_package, import_package,
                preview, read_workspace)
+from .core import (_read_workspace_from_snapshot, _validate_importable_package,
+                   _workspace_read_snapshot)
 from . import _client_storage as storage
 from ._client_storage import (
     CANONICAL_NAME,
@@ -152,14 +154,10 @@ class ManagedHandbook:
         if not isinstance(canonical, dict) or type(canonical.get("revision")) is not int:
             raise ClientError("CLIENT_CANONICAL_INVALID", "Managed canonical has no valid revision")
         try:
-            canonical_state = import_package(copy.deepcopy(canonical))
-            canonical_validation = check(canonical_state)
+            _validate_importable_package(copy.deepcopy(canonical))
         except AuthoringError as error:
             raise ClientError("CLIENT_CANONICAL_INVALID", "Managed canonical is not valid",
                               error=error.as_dict()) from error
-        if not canonical_validation.get("valid"):
-            raise ClientError("CLIENT_CANONICAL_INVALID", "Managed canonical is not valid",
-                              errors=canonical_validation.get("errors", []))
         return state, canonical, validation
 
     def status(self):
@@ -231,14 +229,14 @@ class ManagedHandbook:
                 result['publish_status'] = _publish_status(state['revision'], canonical['revision'])
             return result
 
-    def _read_pages(self, state, object_type):
+    def _read_pages(self, state, object_type, snapshot):
         objects = []
         cursor = None
         pages = 0
         while True:
             try:
-                result = read_workspace(
-                    state,
+                result = _read_workspace_from_snapshot(
+                    state, snapshot,
                     selection={"types": [object_type]},
                     limit=CLIENT_PAGE_SIZE,
                     cursor=cursor,
@@ -265,101 +263,105 @@ class ManagedHandbook:
             raise ClientError("CLIENT_INPUT_ERROR", "source_text_handles must be a handle list")
         with locked(self.root):
             state, _, _ = self._validated_state_and_canonical()
-            if "handle" in target:
-                try:
-                    direct = read_workspace(
-                        state,
-                        selection={"handles": [target["handle"]]},
-                        limit=CLIENT_PAGE_SIZE,
-                    )
-                except AuthoringError as error:
-                    if error.code in {"REFERENCE_NOT_FOUND", "INVALID_ARGUMENT"}:
-                        raise ClientError("TARGET_NOT_FOUND", "Place handle was not found",
-                                          handle=target["handle"]) from error
-                    raise
-                candidates = [entry for entry in direct["objects"] if entry["type"] == "place"]
-                if not candidates and direct['objects']:
-                    raise ClientError('TARGET_KIND_MISMATCH', 'client context supports Place only; use client read for this object',
-                                      expected_type='place', actual_type=direct['objects'][0]['type'],
-                                      handle=target['handle'],
-                                      recovery={'argv': ['client', 'read', str(self.root), '--handle', target['handle']]})
-                place_pages = 1
-            else:
-                places, place_pages = self._read_pages(state, "place")
-                candidates = [entry for entry in places
-                              if entry["record"].get("name") == target["name"]]
-            if not candidates:
-                raise ClientError("TARGET_NOT_FOUND", "Place was not found", target=copy.deepcopy(target))
-            if len(candidates) > 1:
-                raise ClientError("TARGET_AMBIGUOUS", "Place name matches more than one record",
-                                  candidates=[{"handle": item["handle"],
-                                               "name": item["record"].get("name")}
-                                              for item in candidates])
-            place = candidates[0]
-            target_ref = state["handles"].get(place["handle"])
+            return self._place_context_from_state(state, target, source_text_handles)
 
-            notes, note_pages = self._read_pages(state, "guide_note")
-            related_notes = [entry for entry in notes
-                             if target_ref in entry["record"].get("related_refs", [])]
-            items, item_pages = self._read_pages(state, "item")
-            related_items = [entry for entry in items
-                             if entry["record"].get("place_ref") == target_ref]
-            issues, issue_pages = self._read_pages(state, "issue")
-            related_issues = [entry for entry in issues
-                              if target_ref in entry["record"].get("target_refs", [])]
-            wanted_source_refs = {_ref_key(ref) for ref in _source_refs(place["record"])}
-            for note in related_notes:
-                wanted_source_refs.update(_ref_key(ref) for ref in _source_refs(note["record"]))
-            sources, source_pages = self._read_pages(state, "source")
-            related_sources = [entry for entry in sources
-                               if _ref_key(state["handles"].get(entry["handle"]))
-                               in wanted_source_refs]
-            related_handles = {entry["handle"] for entry in related_sources}
-            invalid_text_handles = [handle for handle in source_text_handles
-                                    if handle not in related_handles]
-            if invalid_text_handles:
-                raise ClientError("SOURCE_NOT_RELATED",
-                                  "Source text can only be requested for related Sources",
-                                  handles=invalid_text_handles)
-            source_texts = {}
-            unavailable = []
-            for handle in source_text_handles:
-                selected = read_workspace(
-                    state,
-                    selection={"handles": [handle]},
+    def _place_context_from_state(self, state, target, source_text_handles):
+        snapshot = _workspace_read_snapshot(state)
+        if "handle" in target:
+            try:
+                direct = _read_workspace_from_snapshot(
+                    state, snapshot,
+                    selection={"handles": [target["handle"]]},
                     limit=CLIENT_PAGE_SIZE,
-                    include_source_text=True,
                 )
-                snapshots = selected.get("source_texts", [])
-                if snapshots:
-                    source_texts[handle] = copy.deepcopy(snapshots)
-                else:
-                    unavailable.append(handle)
-            return {
-                "revision": state["revision"],
-                "recovery_mode": self._marker["recovery_mode"],
-                "place": copy.deepcopy(place),
-                "related_guide_notes": copy.deepcopy(related_notes),
-                "related_items": copy.deepcopy(related_items),
-                "related_issues": copy.deepcopy(related_issues),
-                "association_review": {
-                    "needed": bool(related_items and (related_notes or related_issues)),
-                    "reason": "place-linked text may describe mutable arrangements",
-                    "automatic_text_or_issue_change": False,
-                },
-                "sources": copy.deepcopy(related_sources),
-                "source_texts": source_texts,
-                "source_text_unavailable": unavailable,
-                "supported_patches": copy.deepcopy(SUPPORTED_PATCHES),
-                "pages_scanned": {
-                    "place": place_pages,
-                    "guide_note": note_pages,
-                    "item": item_pages,
-                    "issue": issue_pages,
-                    "source": source_pages,
-                },
-                "complete": True,
-            }
+            except AuthoringError as error:
+                if error.code in {"REFERENCE_NOT_FOUND", "INVALID_ARGUMENT"}:
+                    raise ClientError("TARGET_NOT_FOUND", "Place handle was not found",
+                                      handle=target["handle"]) from error
+                raise
+            candidates = [entry for entry in direct["objects"] if entry["type"] == "place"]
+            if not candidates and direct['objects']:
+                raise ClientError('TARGET_KIND_MISMATCH', 'client context supports Place only; use client read for this object',
+                                  expected_type='place', actual_type=direct['objects'][0]['type'],
+                                  handle=target['handle'],
+                                  recovery={'argv': ['client', 'read', str(self.root), '--handle', target['handle']]})
+            place_pages = 1
+        else:
+            places, place_pages = self._read_pages(state, "place", snapshot)
+            candidates = [entry for entry in places
+                          if entry["record"].get("name") == target["name"]]
+        if not candidates:
+            raise ClientError("TARGET_NOT_FOUND", "Place was not found", target=copy.deepcopy(target))
+        if len(candidates) > 1:
+            raise ClientError("TARGET_AMBIGUOUS", "Place name matches more than one record",
+                              candidates=[{"handle": item["handle"],
+                                           "name": item["record"].get("name")}
+                                          for item in candidates])
+        place = candidates[0]
+        target_ref = state["handles"].get(place["handle"])
+
+        notes, note_pages = self._read_pages(state, "guide_note", snapshot)
+        related_notes = [entry for entry in notes
+                         if target_ref in entry["record"].get("related_refs", [])]
+        items, item_pages = self._read_pages(state, "item", snapshot)
+        related_items = [entry for entry in items
+                         if entry["record"].get("place_ref") == target_ref]
+        issues, issue_pages = self._read_pages(state, "issue", snapshot)
+        related_issues = [entry for entry in issues
+                          if target_ref in entry["record"].get("target_refs", [])]
+        wanted_source_refs = {_ref_key(ref) for ref in _source_refs(place["record"])}
+        for note in related_notes:
+            wanted_source_refs.update(_ref_key(ref) for ref in _source_refs(note["record"]))
+        sources, source_pages = self._read_pages(state, "source", snapshot)
+        related_sources = [entry for entry in sources
+                           if _ref_key(state["handles"].get(entry["handle"]))
+                           in wanted_source_refs]
+        related_handles = {entry["handle"] for entry in related_sources}
+        invalid_text_handles = [handle for handle in source_text_handles
+                                if handle not in related_handles]
+        if invalid_text_handles:
+            raise ClientError("SOURCE_NOT_RELATED",
+                              "Source text can only be requested for related Sources",
+                              handles=invalid_text_handles)
+        source_texts = {}
+        unavailable = []
+        for handle in source_text_handles:
+            selected = _read_workspace_from_snapshot(
+                state, snapshot,
+                selection={"handles": [handle]},
+                limit=CLIENT_PAGE_SIZE,
+                include_source_text=True,
+            )
+            snapshots = selected.get("source_texts", [])
+            if snapshots:
+                source_texts[handle] = copy.deepcopy(snapshots)
+            else:
+                unavailable.append(handle)
+        return {
+            "revision": state["revision"],
+            "recovery_mode": self._marker["recovery_mode"],
+            "place": copy.deepcopy(place),
+            "related_guide_notes": copy.deepcopy(related_notes),
+            "related_items": copy.deepcopy(related_items),
+            "related_issues": copy.deepcopy(related_issues),
+            "association_review": {
+                "needed": bool(related_items and (related_notes or related_issues)),
+                "reason": "place-linked text may describe mutable arrangements",
+                "automatic_text_or_issue_change": False,
+            },
+            "sources": copy.deepcopy(related_sources),
+            "source_texts": source_texts,
+            "source_text_unavailable": unavailable,
+            "supported_patches": copy.deepcopy(SUPPORTED_PATCHES),
+            "pages_scanned": {
+                "place": place_pages,
+                "guide_note": note_pages,
+                "item": item_pages,
+                "issue": issue_pages,
+                "source": source_pages,
+            },
+            "complete": True,
+        }
 
     def _find_operation_by_request_id(self, request_id):
         for path in operation_directories(self.root):
@@ -653,22 +655,8 @@ class ManagedHandbook:
                 existing_status = self._resume_prepare(existing_path, existing_status, state)
                 return self._prepared_result(existing_path, existing_status)
             self._reject_unjournaled_receipt(state, intent["request_id"])
-
-        context = self.place_context(target=edit["target"])
-        with locked(self.root):
-            state, _, _ = self._validated_state_and_canonical()
-            existing_path, existing_status = self._find_operation_by_request_id(edit["request_id"])
-            if existing_path is not None:
-                if (existing_status.get("kind") == "professional_request"
-                        or existing_status.get("intent_sha256") != intent_hash):
-                    raise ClientError("REQUEST_ID_REUSED",
-                                      "request_id already belongs to a different enrichment intent",
-                                      operation_id=existing_path.name,
-                                      recovery=_changed_intent_recovery(existing_path, existing_status))
-                existing_status = self._resume_prepare(existing_path, existing_status, state)
-                return self._prepared_result(existing_path, existing_status)
-            self._reject_unjournaled_receipt(state, intent["request_id"])
-            if state["revision"] != edit["expected_revision"] or context["revision"] != state["revision"]:
+            context = self._place_context_from_state(state, edit["target"], [])
+            if state["revision"] != edit["expected_revision"]:
                 raise ClientError("REVISION_CONFLICT", "Read fresh context before preparing enrichment",
                                   current_revision=state["revision"])
             _, path = create_operation(
@@ -757,10 +745,7 @@ class ManagedHandbook:
                               errors=validation.get("errors", []))
         exported = export_package(state, revision=state["revision"])
         storage._fault("before_canonical_validation")
-        reopened = import_package(copy.deepcopy(exported["package"]))
-        reopened_validation = check(reopened)
-        if not reopened_validation.get("valid"):
-            raise ClientError("CLIENT_EXPORT_FAILED", "Candidate canonical did not round-trip")
+        _validate_importable_package(copy.deepcopy(exported["package"]))
         atomic_write_json(
             self.root / REPORT_NAME,
             {key: value for key, value in exported.items() if key != "package"},

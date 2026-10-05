@@ -2,48 +2,15 @@
 
 This is the callable protocol and method inventory, not a second setup path. Start with [the short default CLI workflow](DEFAULT_WORKFLOW_GUIDE.md). Read the [managed continuation guide](CLIENT_GUIDE.md) for a relevant edit, [arrangement edits](ARRANGEMENT_EDIT_GUIDE.md) when changing days or items, or [the optional Python examples](PYTHON_OPTIONAL_GUIDE.md) only when programmatic state handling is needed; use `CALLER_GUIDE.md` and other topic guides only for the methods the material calls for. Live `read.capabilities` remains authoritative.
 
-新攻略先用既有公开 request 完成首次创建，经 `preview` 审阅、`apply`、`check` 有效后，在第一次打开网页前用[受管理客户端](CLIENT_GUIDE.md)初始化最终新目录；后续同一目录以 `client context`/`client read`/`prepare-*`/`commit` 编辑，以 `client check` 读取当前完整诊断。纠正、availability/开放时间、精确引用、旧 Note 修改和安排调整仍使用下文原专业方法**构造请求**，但在 managed 生命周期内递交；不要直改其文件或对其运行普通 `apply`。撤下和解绑不是彻底删除，未列出的删除方法不可调用。已有外部 canonical 暂不能接入这条路径。
+首次创建与预览见[默认工作流](DEFAULT_WORKFLOW_GUIDE.md)，在同一 ROOT 续改见[受管理客户端](CLIENT_GUIDE.md)，旧自管文件的恢复见[恢复指南](RECOVERY_READ_PREVIEW_GUIDE.md)。本页列出公开方法合同；managed 续作仍按这些合同构造请求，再由客户端提交。
 
 安装与解释器选择见[运行环境指南](RUNTIME_SETUP_GUIDE.md)；网页服务、Google 配置与图片目录见[浏览器预览指南](BROWSER_PREVIEW_GUIDE.md)。这两页是操作说明，不替代方法合同。
-
-## 运行：默认路径中的公共命令
-
-安装后的 Skill 使用 `scripts/travel-handbook` 启动器；开发仓库中可等价使用 `python3 -m authoring`。下面只是命令顺序速查，具体路径、首次 request、预览审阅和失败恢复按[默认工作流](DEFAULT_WORKFLOW_GUIDE.md)，**不要整段自动提交**：
-
-```sh
-scripts/travel-handbook create /tmp/lunch-authoring-state.json --title 示例午餐行 --example
-scripts/travel-handbook read /tmp/lunch-authoring-state.json
-scripts/travel-handbook preview /tmp/lunch-authoring-state.json /tmp/lunch-request.json
-scripts/travel-handbook apply /tmp/lunch-authoring-state.json /tmp/lunch-request.json > /tmp/lunch-receipt.json
-scripts/travel-handbook check /tmp/lunch-authoring-state.json
-scripts/travel-handbook client init "/tmp/managed handbook" --state /tmp/lunch-authoring-state.json
-scripts/travel-handbook client read "/tmp/managed handbook"
-scripts/travel-handbook client check "/tmp/managed handbook"
-```
-
-先从 read 取真实 revision，再作者化 request；`--example` 仅用于合成演示。首次 `check.valid=true` 才 `client init`，网页从一开始读取 `ROOT/private-handbook.json`。后续专业写入用 `client prepare-request` 审阅后 `client commit`，支持的窄 Place 补充可用 `prepare-place`。`client check` 的 `report` 属于当前 state，`publish_status=stale` 时不能说旧网页已更新。CLI 失败非零并输出结构化 JSON；严格拒绝重复键与非有限数字。旧自管完整 state 的 `import`/`export` 与手工保存流程只见[恢复指南](RECOVERY_READ_PREVIEW_GUIDE.md)，不要用于 managed 目录。
-
-`/tmp/lunch-request.json` 最小示例：
-
-```json
-{
-  "request_id": "create-lunch-1",
-  "expected_revision": 0,
-  "operations": [
-    {"method": "trip.define", "as": "trip", "args": {"start_date": "2026-10-05", "end_date": "2026-10-05", "default_timezone": "Asia/Tokyo"}},
-    {"method": "day.add", "as": "day", "args": {"date": "2026-10-05", "timezone": "Asia/Tokyo"}},
-    {"method": "place.add", "as": "shop", "args": {"name": "示例荞麦店", "roles": ["restaurant"]}},
-    {"method": "plan.add", "as": "lunch", "args": {"day": {"local": "day"}, "kind": "meal", "title": "午餐", "place": {"local": "shop"}}},
-    {"method": "task.add", "as": "verify", "args": {"title": "核实是否需要预约", "action": "verify", "targets": [{"local": "lunch"}]}}
-  ]
-}
-```
-
-省略时间、参与者时，安排写入 `unknown`。本例没有价格、预约、付款、坐标或默认参加人数。`as` 是批内别名；下轮使用回执或 read 返回的 `{"handle": "..."}`。底层对象 ID 和 Link、开放规则的局部 ID 均由实现分配。
 
 ## Python 与公共协议
 
 程序内创建和从任意已有 managed ROOT 做专业补充的可独立示例在[Python 备选指南](PYTHON_OPTIONAL_GUIDE.md)。下面是各公开方法的合同，不是另一条默认持久化流程。
+
+安装后的 CLI 使用 `scripts/travel-handbook`，开发仓库可用 `python3 -m authoring`；`--example` 仅用于合成演示。CLI 失败时非零退出并输出结构化 JSON，输入严格拒绝重复键与非有限数字。`as` 是批内别名，后续请求使用回执或 read 返回的 `{"handle": "..."}`；底层对象 ID 与 Link、开放规则的局部 ID 均由实现分配。省略时间或参与者时，安排对应字段为 `unknown`。撤下或解绑不等于删除，未公开的方法不可调用。
 
 Python API 返回新状态，不改传入状态；异常为 `AuthoringError`，`as_dict()` 给出未提交诊断。不能直接写 state 或 package 修补结果后宣称方法成功。read 的记录是副本，公开 schema_version、capabilities.coordinate_inputs 坐标输入要求及独立 budget_projection，可查当前对象和链接的 owner；无参数保持完整读取，selection/limit/cursor 提供有界局部读取，准确恢复与分页契约见[专门指南](RECOVERY_READ_PREVIEW_GUIDE.md)。
 

@@ -16,11 +16,12 @@
 
 ## 3. Generate from the development repository
 
-在开发仓库运行发布准备命令；它会构建稳定公开契约、同步 Skill 与仓库模板、刷新 manifest 并生成确定性 ZIP：
+在开发仓库为本次发行设置一次版本，并运行发布准备命令；它会构建公开 Skill、同步模板、刷新 manifest、校验 bundle 并生成最终确定性 ZIP：
 
 ```sh
+VERSION=0.3.10  # 替换为本次选定版本；后续命令沿用同一 shell
 python3 scripts/prepare_public_release.py \
-  --version 0.3.9 \
+  --version "$VERSION" \
   --release-repo /absolute/path/to/travel-handbook-builder-skill
 ```
 
@@ -28,8 +29,9 @@ python3 scripts/prepare_public_release.py \
 
 ## 4. Verify generated files
 
+在新生成的公开仓库目录运行；准备命令已刷新 manifest，不需无改动重建：
+
 ```sh
-python3 tools/refresh_manifest.py --version 0.3.9 --release-tag v0.3.9
 python3 travel-handbook-builder-skill/scripts/verify_bundle.py
 python3 travel-handbook-builder-skill/scripts/setup_runtime.py
 travel-handbook-builder-skill/scripts/travel-handbook --help
@@ -46,23 +48,36 @@ setup 后再次 verify 是必需项，用于确认正常运行没有污染受校
 - 当本版**声明**新的自然发现、跨模型或跨场景能力，或该行为是发布阻断风险时，先用与该声明相称的新目录、新会话案例验收；失败保留，不补教或挑成功样本。若真实资料体验明确安排为发布后验，发布说明须写明尚未验收的范围与后续结果入口，不能说已通过。
 - 失败记录不得由修复后的成功覆盖；新候选使用新证据目录。
 
-## 6. Build release ZIP
+## 6. Accept the generated ZIP
 
 ```sh
-python3 tools/build_release.py
-shasum -a 256 dist/travel-handbook-builder-skill-0.3.9.zip
+ZIP="dist/travel-handbook-builder-skill-${VERSION}.zip"
+shasum -a 256 "$ZIP"
+unzip -t "$ZIP"
+ACCEPT_DIR="$(mktemp -d)"
+unzip -q "$ZIP" -d "$ACCEPT_DIR"
+python3 "$ACCEPT_DIR/travel-handbook-builder-skill/scripts/verify_bundle.py"
+BUNDLE_PYTHON="$(travel-handbook-builder-skill/scripts/python -c 'import sys; print(sys.executable)')"
+TRAVEL_HANDBOOK_PYTHON="$BUNDLE_PYTHON" \
+  "$ACCEPT_DIR/travel-handbook-builder-skill/scripts/travel-handbook" --help
 ```
 
-构建器只打包 manifest 声明的文件与 `MANIFEST.json`，使用固定时间戳和文件权限生成确定性 ZIP。
+在独立目录继续按第 5 节验证受影响的公开 CLI 路径，并将同一个 `TRAVEL_HANDBOOK_PYTHON` 显式传给解压包；依赖未变时无需再次安装。构建器只打包 manifest 声明的文件与 `MANIFEST.json`，使用固定时间戳和权限。若需要单独验收确定性，可在**未改动候选文件**时运行 `python3 tools/build_release.py --output "$ACCEPT_DIR/rebuilt.zip"`，并用 `cmp "$ZIP" "$ACCEPT_DIR/rebuilt.zip"` 比较；这只是第二次构建验收，不要求重跑准备、刷新 manifest 或安装。
 
 ## 7. Publish
 
 ```sh
-git tag -a v0.3.9 -m "travel-handbook-builder-skill v0.3.9"
+git tag -a "v${VERSION}" -m "travel-handbook-builder-skill v${VERSION}"
 git push origin main --follow-tags
-gh release create v0.3.9 dist/travel-handbook-builder-skill-0.3.9.zip \
-  --title "travel-handbook-builder-skill v0.3.9" \
+gh release create "v${VERSION}" "$ZIP" \
+  --title "travel-handbook-builder-skill v${VERSION}" \
   --notes-file /path/to/release-notes.md
 ```
 
-发布后核对仓库可见性、tag、release asset SHA-256 和默认分支 HEAD。
+发布后核对仓库可见性、tag、默认分支 HEAD，并把远端 asset 下载到另一目录核对 SHA-256：
+
+```sh
+REMOTE_DIR="$(mktemp -d)"
+gh release download "v${VERSION}" --pattern "travel-handbook-builder-skill-${VERSION}.zip" --dir "$REMOTE_DIR"
+shasum -a 256 "$ZIP" "$REMOTE_DIR/travel-handbook-builder-skill-${VERSION}.zip"
+```

@@ -38,9 +38,9 @@ def _location_contract(guide):
 
 
 COORDINATE_INPUTS = {
-    'place.update.set.location': _location_contract('authoring/LOCATION_GUIDE.md'),
-    'access_point.add.location': _location_contract('authoring/ACCESS_POINT_GUIDE.md'),
-    'access_point.update.set.location': _location_contract('authoring/ACCESS_POINT_GUIDE.md'),
+    'place.update.set.location': _location_contract('references/LOCATION_GUIDE.md'),
+    'access_point.add.location': _location_contract('references/ACCESS_POINT_GUIDE.md'),
+    'access_point.update.set.location': _location_contract('references/ACCESS_POINT_GUIDE.md'),
     'path.add_schematic': {
         'required': ['coordinate_system', 'mode', 'parts'],
         'accepted_coordinate_systems': ['WGS84'],
@@ -50,7 +50,7 @@ COORDINATE_INPUTS = {
         'converts_coordinates': False,
         'geometry_kind': 'schematic; not verified routing or a navigation track',
         'repair': REPAIR,
-        'guide': 'authoring/MOVEMENT_GUIDE.md',
+        'guide': 'references/MOVEMENT_GUIDE.md',
     },
     'path.record': {
         'required': ['kind', 'coordinate_system', 'mode', 'parts'],
@@ -63,7 +63,7 @@ COORDINATE_INPUTS = {
         'converts_coordinates': False,
         'geometry_kind': 'explicit recorded geometry; kind and source provenance do not prove routability, GPS verification or endpoint reachability',
         'repair': REPAIR,
-        'guide': 'authoring/MOVEMENT_GUIDE.md',
+        'guide': 'references/MOVEMENT_GUIDE.md',
     },
 }
 
@@ -78,7 +78,7 @@ def validate_coordinate_inputs(method, args):
         if not isinstance(location, dict):
             return  # Standard validation reports invalid Location shapes.
         parameter = 'set.location.coordinate_system'
-        guide = 'authoring/LOCATION_GUIDE.md'
+        guide = 'references/LOCATION_GUIDE.md'
         crs = location.get('coordinate_system')
         missing = [key for key in LOCATION_REQUIRED if key not in location]
         location_parameter = 'set.location'
@@ -87,7 +87,7 @@ def validate_coordinate_inputs(method, args):
         if not isinstance(location, dict):
             return
         parameter = 'location.coordinate_system'
-        guide = 'authoring/ACCESS_POINT_GUIDE.md'
+        guide = 'references/ACCESS_POINT_GUIDE.md'
         crs = location.get('coordinate_system')
         missing = [key for key in LOCATION_REQUIRED if key not in location]
         location_parameter = 'location'
@@ -97,13 +97,13 @@ def validate_coordinate_inputs(method, args):
         if not isinstance(location, dict):
             return
         parameter = 'set.location.coordinate_system'
-        guide = 'authoring/ACCESS_POINT_GUIDE.md'
+        guide = 'references/ACCESS_POINT_GUIDE.md'
         crs = location.get('coordinate_system')
         missing = [key for key in LOCATION_REQUIRED if key not in location]
         location_parameter = 'set.location'
     elif method in {'path.add_schematic', 'path.record'}:
         parameter = 'coordinate_system'
-        guide = 'authoring/MOVEMENT_GUIDE.md'
+        guide = 'references/MOVEMENT_GUIDE.md'
         crs = args.get('coordinate_system')
         missing = ['coordinate_system']
     else:

@@ -11,11 +11,11 @@ CLI() { "/absolute/path/to/travel-handbook-builder-skill/scripts/travel-handbook
 
 ## 首次创建
 
-`STATE` 是尚不存在的新文件，`ROOT` 是尚不存在或为空的新目录；两者均放在 Skill 安装目录外。先创建空 state 并读取真实 revision：
+`STATE` 是尚不存在的新文件，`ROOT` 是尚不存在或为空的新目录；两者均放在 Skill 安装目录外。先创建空 state；首次有界读取保留完整 capabilities 和真实 revision：
 
 ```sh
 CLI create "/absolute/output/trip-state.json" --title "本次旅行名称"
-CLI read "/absolute/output/trip-state.json"
+CLI read "/absolute/output/trip-state.json" --type trip --limit 1
 ```
 
 根据材料保存自己的 `/absolute/output/create-request.json`。以下仅演示一次已选到访；日期、时区、地点和标题都必须来自真实材料，不能照抄示例。`expected_revision` 取刚才 read 的值，批内引用用 `{"local": "..."}`，后续请求则用公开 read 得到的 `{"handle": "..."}`，不能猜 handle 或领域 ID。
@@ -59,7 +59,7 @@ CLI client init "/absolute/output/managed handbook" --state "/absolute/output/tr
 
 ## 在同一 ROOT 续改
 
-先用 `client read ROOT` 取得当前 revision、handles 和能力；改 Place 时用 `client context ROOT --handle PLACE_HANDLE`（仅有名称时用 `--name NAME` 并核对候选），它同时返回关联说明与来源。只补一项有来源且不覆盖旧值的 Place 内容可读[managed 指南](CLIENT_GUIDE.md)使用 `prepare-place`。纠错、修改开放规则、调整安排和其他公开方法按匹配的专业指南构造原格式 request，用 `prepare-request`。更新复合字段前读回完整旧值并带回无关子字段；不要为改一个字段重建整份行程。来源适用期、例外和关键未知保持明确；公开计划不能冒充已出票或已预订。
+先用 `client read ROOT --type trip --limit 1` 取得当前 revision 和完整能力；随后按目标类型、handle 或 Day handle 局部读取，已取得能力时加 `--omit-capabilities`，分页时保持同一过滤器并追完 cursor。改 Place 时用 `client context ROOT --handle PLACE_HANDLE`（仅有名称时用 `--name NAME` 并核对候选），它同时返回关联说明与来源。只补一项有来源且不覆盖旧值的 Place 内容可读[managed 指南](CLIENT_GUIDE.md)使用 `prepare-place`。纠错、修改开放规则、调整安排和其他公开方法按匹配的专业指南构造原格式 request，用 `prepare-request`。更新复合字段前读回完整旧值并带回无关子字段；不要为改一个字段重建整份行程。来源适用期、例外和关键未知保持明确；公开计划不能冒充已出票或已预订。
 
 下面是请求形状示意，实际 revision、目标和内容须来自当前 read 与本次授权。`trip.update` 不需要 target；其他对象遵循各自公开方法合同。
 
@@ -69,10 +69,10 @@ CLI client init "/absolute/output/managed handbook" --state "/absolute/output/tr
 ```
 
 ```sh
-CLI client read "/absolute/output/managed handbook" --type trip
+CLI client read "/absolute/output/managed handbook" --type trip --limit 1
 CLI client prepare-request "/absolute/output/managed handbook" "/absolute/output/reviewed-request.json"
 CLI client commit "/absolute/output/managed handbook" "OPERATION_ID_FROM_PREPARE"
-CLI client read "/absolute/output/managed handbook" --type trip
+CLI client read "/absolute/output/managed handbook" --type trip --limit 1 --omit-capabilities
 CLI client check "/absolute/output/managed handbook"
 ```
 

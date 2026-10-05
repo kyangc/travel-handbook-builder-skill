@@ -200,7 +200,7 @@ def _read_recovery(result, args, argv):
     """Attach executable argument lists without resolving dates/names or guessing intent."""
     if args is not None and result.get('parameter') == 'selection.day':
         prefix = ['client', 'read', str(args.root)] if args.command == 'client' else ['read', str(args.state)]
-        result['recovery'] = {'argv': [*prefix, '--type', 'day', '--limit', '50'],
+        result['recovery'] = {'argv': [*prefix, '--type', 'day', '--limit', '50', '--omit-capabilities'],
                               'then': 'Follow pagination, choose the returned handle by record.date, and retry --day DAY_HANDLE.'}
     if (result.get('code') == 'INVALID_CLI' and argv[:2] == ['client', 'context']
             and any(value == '--target' or value.startswith('--target=') for value in argv[2:])):

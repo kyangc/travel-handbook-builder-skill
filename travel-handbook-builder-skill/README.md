@@ -4,14 +4,14 @@ Create and revise a private travel handbook from supplied choices and sourced fa
 
 ## Install
 
-Use Python 3.12+ on macOS or Linux. Keep the extracted directory together and place travel data outside it. Verify the bundle, then prepare its isolated runtime:
+Use Python 3.12+ on macOS or Linux. Keep the extracted directory together and place travel data outside it. Setup verifies the bundle before installing dependencies; verify it again afterward:
 
 ```sh
-python3 "/path/to/travel-handbook-builder-skill/scripts/verify_bundle.py"
 python3 "/path/to/travel-handbook-builder-skill/scripts/setup_runtime.py"
+python3 "/path/to/travel-handbook-builder-skill/scripts/verify_bundle.py"
 ```
 
-An existing interpreter with the required dependencies can be selected with `TRAVEL_HANDBOOK_PYTHON`; see [runtime setup](references/RUNTIME_SETUP_GUIDE.md). Point the Agent's Skill setting at this directory's parent. Kimi CLI accepts that parent with `--skills-dir`. Run `scripts/travel-handbook --help` for CLI commands.
+When no skill-local `.venv` exists, an existing interpreter with the required dependencies can be selected with `TRAVEL_HANDBOOK_PYTHON`; verify the bundle before that route and see [runtime setup](references/RUNTIME_SETUP_GUIDE.md). Point the Agent's Skill setting at this directory's parent. Kimi CLI accepts that parent with `--skills-dir`. Run `scripts/travel-handbook --help` for CLI commands.
 
 ## Create and continue
 

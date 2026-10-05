@@ -317,8 +317,8 @@ def _register_handle(handles, ref):
     return handle
 
 
-def import_package(package):
-    """Create a new authoring workspace from a complete canonical package."""
+def _validate_importable_package(package):
+    """Check a canonical package without creating authoring workspace metadata."""
     if not isinstance(package, dict):
         fail('INVALID_ARGUMENT', 'package must be a JSON object', parameter='package')
     canonical(package)
@@ -328,6 +328,12 @@ def import_package(package):
     validation = validate_authored(package)
     if not validation['valid']:
         fail('MODEL_VALIDATION', 'Package is not valid', errors=validation['errors'])
+    return validation
+
+
+def import_package(package):
+    """Create a new authoring workspace from a complete canonical package."""
+    _validate_importable_package(package)
     imported = copy.deepcopy(package)
     handles = {}
     for ref, _ in _domain_records(imported):
@@ -538,19 +544,8 @@ def _direct_handle_links(state, entries):
     return [found[key] for key in sorted(found)]
 
 
-def read_workspace(state, selection=None, limit=None, cursor=None,
-                   include_source_text=False, report=None, include_capabilities=True):
-    """Small first-slice read surface; handles survive process restarts."""
-    check_workspace(state)
-    if type(include_capabilities) is not bool:
-        fail('INVALID_ARGUMENT', 'include_capabilities must be boolean', parameter='include_capabilities')
-    if report is not None:
-        if report != 'map-coverage':
-            fail('INVALID_ARGUMENT', 'Unknown read report; supported: map-coverage', parameter='report')
-        from .map_coverage import read_map_coverage
-        return read_map_coverage(state, selection, limit, cursor, include_source_text)
-    local_mode = (selection is not None or limit is not None or cursor is not None
-                  or include_source_text is not False)
+def _workspace_read_snapshot(state):
+    """Project every handle once for one read or one managed context scan."""
     objects = []
     package = state['package']
     for handle, ref in state['handles'].items():
@@ -577,6 +572,25 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
                     fail('STATE_FORMAT', 'Current Item ownership cannot be resolved')
                 entry['ownership'] = {'kind': 'day', 'day': {'handle': day_handle}}
         objects.append(entry)
+    return {'objects': objects}
+
+
+def _read_workspace_from_snapshot(state, snapshot, selection=None, limit=None, cursor=None,
+                                  include_source_text=False, report=None, include_capabilities=True):
+    check_workspace(state)
+    if type(include_capabilities) is not bool:
+        fail('INVALID_ARGUMENT', 'include_capabilities must be boolean', parameter='include_capabilities')
+    if report is not None:
+        if report != 'map-coverage':
+            fail('INVALID_ARGUMENT', 'Unknown read report; supported: map-coverage', parameter='report')
+        from .map_coverage import read_map_coverage
+        return read_map_coverage(state, selection, limit, cursor, include_source_text)
+    local_mode = (selection is not None or limit is not None or cursor is not None
+                  or include_source_text is not False)
+    if snapshot is None:
+        snapshot = _workspace_read_snapshot(state)
+    objects = snapshot['objects']
+    package = state['package']
     full = {'revision': state['revision'], 'schema_version': package.get('schema_version') if package else None,
         'title': state['title'], 'objects': objects,
         'capabilities': {'schema_versions': list(SUPPORTED_SCHEMA_VERSIONS), 'new_trip_schema_version': '1.0',
@@ -584,14 +598,14 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
             'read_reports': {'map-coverage': {
                 'filters': ['day'], 'default_limit': READ_DEFAULT_LIMIT, 'max_limit': READ_MAX_LIMIT,
                 'read_only': True, 'scope': 'current_state_projection_not_sdk_or_network',
-                'guide': 'authoring/MAP_COVERAGE_GUIDE.md'}},
+                'guide': 'references/MAP_COVERAGE_GUIDE.md'}},
             'day_weather': {'add_parameter': 'weather_location',
                             'canonical_field': 'weather_location_ref',
                             'update_field': 'weather_location',
                             'target_types': ['place', 'access_point'],
                             'clear_field': 'weather_location',
                             'automatic_location_selection': False,
-                            'guide': 'authoring/WEATHER_GUIDE.md'},
+                            'guide': 'references/WEATHER_GUIDE.md'},
             'coordinate_inputs': COORDINATE_INPUTS, 'batch': 'atomic', 'concurrency': 'single_writer',
             'recovery': {'state': 'full_authoring_context',
                          'canonical_package_import': 'domain_values_without_authoring_metadata'},
@@ -641,8 +655,16 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
                     if entry['type'] in normalized['types']}
     if 'handles' in normalized:
         allowed &= set(normalized['handles'])
-    ordered = sorted((entry for entry in objects if entry['handle'] in allowed),
-                     key=lambda entry: canonical(state['handles'][entry['handle']]))
+    if 'ordered' not in snapshot:
+        snapshot['ordered'] = sorted(
+            objects, key=lambda entry: canonical(state['handles'][entry['handle']]))
+        by_type = {}
+        for entry in snapshot['ordered']:
+            by_type.setdefault(entry['type'], []).append(entry)
+        snapshot['by_type'] = by_type
+    candidates = (snapshot['by_type'].get(normalized['types'][0], [])
+                  if len(normalized.get('types', [])) == 1 else snapshot['ordered'])
+    ordered = [entry for entry in candidates if entry['handle'] in allowed]
     offset = 0 if cursor is None else _cursor_offset(cursor, normalized, state)
     if offset > len(ordered):
         fail('CURSOR_INVALID', 'Cursor offset is outside the selected result', parameter='cursor')
@@ -679,6 +701,15 @@ def read_workspace(state, selection=None, limit=None, cursor=None,
     if not include_capabilities:
         result.pop('capabilities')
     return copy.deepcopy(result)
+
+
+def read_workspace(state, selection=None, limit=None, cursor=None,
+                   include_source_text=False, report=None, include_capabilities=True):
+    """Small first-slice read surface; handles survive process restarts."""
+    return _read_workspace_from_snapshot(
+        state, None, selection=selection, limit=limit, cursor=cursor,
+        include_source_text=include_source_text, report=report,
+        include_capabilities=include_capabilities)
 
 
 def export_package(state, *, revision):

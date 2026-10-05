@@ -8,12 +8,13 @@ This guide covers the installed Skill's Python environment and launcher behavior
 - A POSIX shell for the bundled `scripts/travel-handbook` and `scripts/python` launchers.
 - Network access during dependency installation, unless the packages in `requirements.txt` are already available from a configured package index or cache. A preconfigured Python with those dependencies does not need installation.
 
-From any working directory, verify the bundle. If no suitable Python environment
-is already available, create the skill-local environment:
+From any working directory, create the skill-local environment when no suitable
+Python is already available. Setup verifies the bundle before creating the
+environment or installing dependencies; verify again after setup:
 
 ```sh
-python3 "/path/to/travel-handbook-builder-skill/scripts/verify_bundle.py"
 python3 "/path/to/travel-handbook-builder-skill/scripts/setup_runtime.py"
+python3 "/path/to/travel-handbook-builder-skill/scripts/verify_bundle.py"
 ```
 
 Setup creates only `travel-handbook-builder-skill/.venv` and installs the pinned JSON Schema validator plus a `tzdata` fallback there. It does not modify the global Python environment. Re-running setup reuses that environment and rechecks imports, timezone data, and the CLI.
@@ -23,6 +24,7 @@ existing external interpreter without running setup or installing anything:
 
 ```sh
 SKILL_DIR="/path/to/travel-handbook-builder-skill"
+python3 "$SKILL_DIR/scripts/verify_bundle.py"
 TRAVEL_HANDBOOK_PYTHON="/absolute/path/to/python3" \
   "$SKILL_DIR/scripts/travel-handbook" --help
 TRAVEL_HANDBOOK_PYTHON="/absolute/path/to/python3" \
