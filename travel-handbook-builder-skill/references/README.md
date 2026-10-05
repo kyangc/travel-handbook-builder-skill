@@ -1,6 +1,6 @@
 # Travel Handbook Authoring public API
 
-This is the callable protocol and method inventory, not a second setup path. Start with [the short default CLI workflow](DEFAULT_WORKFLOW_GUIDE.md). Read the [managed continuation guide](CLIENT_GUIDE.md) for a relevant edit, or [the optional Python examples](PYTHON_OPTIONAL_GUIDE.md) only when programmatic state handling is needed; use `CALLER_GUIDE.md` and other topic guides only for the methods the material calls for. Live `read.capabilities` remains authoritative.
+This is the callable protocol and method inventory, not a second setup path. Start with [the short default CLI workflow](DEFAULT_WORKFLOW_GUIDE.md). Read the [managed continuation guide](CLIENT_GUIDE.md) for a relevant edit, [arrangement edits](ARRANGEMENT_EDIT_GUIDE.md) when changing days or items, or [the optional Python examples](PYTHON_OPTIONAL_GUIDE.md) only when programmatic state handling is needed; use `CALLER_GUIDE.md` and other topic guides only for the methods the material calls for. Live `read.capabilities` remains authoritative.
 
 新攻略先用既有公开 request 完成首次创建，经 `preview` 审阅、`apply`、`check` 有效后，在第一次打开网页前用[受管理客户端](CLIENT_GUIDE.md)初始化最终新目录；后续同一目录以 `client context`/`client read`/`prepare-*`/`commit` 编辑，以 `client check` 读取当前完整诊断。纠正、availability/开放时间、精确引用、旧 Note 修改和安排调整仍使用下文原专业方法**构造请求**，但在 managed 生命周期内递交；不要直改其文件或对其运行普通 `apply`。撤下和解绑不是彻底删除，未列出的删除方法不可调用。已有外部 canonical 暂不能接入这条路径。
 

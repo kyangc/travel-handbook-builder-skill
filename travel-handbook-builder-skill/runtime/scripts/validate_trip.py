@@ -2,6 +2,7 @@
 """Offline structural validation plus explicitly bounded domain checks."""
 import argparse
 from datetime import datetime
+from functools import lru_cache
 import json
 from pathlib import Path
 import sys
@@ -59,10 +60,17 @@ def validator(version='1.0'):
     return Draft202012Validator(schema, registry=registry, format_checker=FORMATS)
 
 
+@lru_cache(maxsize=1)
+def _fixed_v1_validator():
+    # validate() only reads this private instance. Public validator() callers
+    # still receive their own schema and registry objects.
+    return validator()
+
+
 def validate(package):
     errors = []
     warnings = []
-    for error in sorted(validator(package.get('schema_version') if isinstance(package, dict) else None).iter_errors(package), key=lambda e: str(list(e.absolute_path))):
+    for error in sorted(_fixed_v1_validator().iter_errors(package), key=lambda e: str(list(e.absolute_path))):
         errors.append({'code': 'SCHEMA_' + str(error.validator).upper(), 'path': pointer(error.absolute_path), 'message': error.message})
     if errors:
         return {'valid': False, 'errors': errors, 'warnings': warnings, 'scope': 'structure; semantics not run'}

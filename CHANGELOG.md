@@ -4,7 +4,19 @@
 
 ## [Unreleased]
 
-本节暂无新增条目。
+## [0.3.9] - 2026-10-05
+
+### Changed
+
+- 精简 Skill 入口、安装说明和默认工作流，集中说明创建、在原目录续改和保持原网址预览；专题细节通过随包指南按需读取。
+- 公开指南统一从开发仓库的 `authoring/` 生成，修复仓库内引用；发行包的 `references/` 路径保持不变。
+- 同一 Python 进程重复校验时复用固定 Schema 的加载与准备；每次仍执行输入数据和领域规则校验。
+- 修复公开首页安装指南的段落链接。
+
+### Compatibility and validation
+
+- 不改变公开 API、数据合同 1.0、网页、依赖或既有攻略；保留来源、未知、原子写入和失败恢复边界。
+- 本地已验证安装包完整性及合成攻略的创建、修改、同网址预览数据读取和停服。未新增自然 Agent 使用效率、跨模型或页面目视验收声明；正式发行产物另行核验。
 
 ## [0.3.8] - 2026-09-29
 
@@ -184,7 +196,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.8...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.9...HEAD
+[0.3.9]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.9
 [0.3.8]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.8
 [0.3.7]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.7
 [0.3.6]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.6

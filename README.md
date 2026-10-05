@@ -29,7 +29,7 @@
 行迹需要配合 Codex、Kimi CLI 等支持本地 Skill 的 AI 工具。运行环境为 Python 3.12+ 与 POSIX shell（如 macOS、Linux）。
 
 1. 从 [Releases](https://github.com/kyangc/travel-handbook-builder-skill/releases/latest) 下载 ZIP 并解压，保留完整的 `travel-handbook-builder-skill` 文件夹。
-2. 按 [安装指南](travel-handbook-builder-skill/README.md#requirements-and-isolated-setup) 校验、准备运行环境，并让助手加载该 Skill。
+2. 按 [安装指南](travel-handbook-builder-skill/README.md#install) 校验、准备运行环境，并让助手加载该 Skill。
 3. 将旅行资料与工作区放在安装目录之外，在对话里开始整理：
 
 > 请用 travel-handbook-builder-skill，把这份行程笔记整理成私人旅行手册，并打开本地预览。保留我已经确定的安排，推荐地点单独列出；没有确认的时间、预订和费用不要补猜。

@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.8"
+    "version": "0.3.9"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.8",
+    "release_tag": "v0.3.9",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -75,14 +75,14 @@
     },
     {
       "path": "README.md",
-      "size": 6243,
-      "sha256": "56b5c4d62d7d3b2805787430b54b91d0d476ddd33f16ea471253c7a351d8dd4c",
+      "size": 2888,
+      "sha256": "a1d3035a1f0f5d614668573dfb1319536c0e3f3c583e5bc49539151a82aa1919",
       "mode": "0644"
     },
     {
       "path": "SKILL.md",
-      "size": 15282,
-      "sha256": "ac9a463c612d36580dbafb3a61ac0b08a899ffcde11c60b45d1ce9522651e3a9",
+      "size": 5205,
+      "sha256": "e0e5bb934c9e647dacb77270593db153d4d841ad806bf10be45361a1e993ca7f",
       "mode": "0644"
     },
     {
@@ -135,8 +135,8 @@
     },
     {
       "path": "references/DEFAULT_WORKFLOW_GUIDE.md",
-      "size": 14315,
-      "sha256": "97eae71d0131dc9d093b52e3a9185fe71a216639ca8f2c226d2554a0baad8c2b",
+      "size": 5987,
+      "sha256": "4ddb2257b0514a5afa0995082a1cc850408a907f78275bf6a7c235fafc3dd9a1",
       "mode": "0644"
     },
     {
@@ -201,8 +201,8 @@
     },
     {
       "path": "references/README.md",
-      "size": 24989,
-      "sha256": "755f4c93dfe8e46d8a21076e7aa00ebc6d123560a930f7e39b692ac10c15a3cb",
+      "size": 25065,
+      "sha256": "34d3df1555e5aa074d4cf4bb915872fc06c7cfc086af07c96636de9af10677ff",
       "mode": "0644"
     },
     {
@@ -579,8 +579,8 @@
     },
     {
       "path": "runtime/scripts/validate_trip.py",
-      "size": 6846,
-      "sha256": "efc1aa38a92fbd784133b72fbbe7ebadc9d89e45c6ff37a9629cd5b349873813",
+      "size": 7031,
+      "sha256": "77f7dadf1b78d6ad3a38a45e0432906e8d79307bbfdffcb66f5be820e2e388cd",
       "mode": "0644"
     },
     {
