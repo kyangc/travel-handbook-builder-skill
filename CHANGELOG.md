@@ -4,6 +4,22 @@
 
 ## [Unreleased]
 
+## [0.3.11] - 2026-10-08
+
+### Changed
+
+- Skill 续改首次读取可直接按本次目标类型或 handle 获取对象、revision 与完整 capabilities；后续仍可省略重复能力说明并追完分页。
+- 受管理预览启动合并同阶段重复的数据校验，启动完成后仍重新核验当前 canonical；`status` 新增 `canonical_revision`。
+- 预览启动超时报告最后就绪阶段、HTTP 探测结果和私有日志位置，便于排查；既有偶发超时的根因尚未确定。
+
+### Fixed
+
+- `preview-service stop` 不再依赖历史操作状态或当前攻略数据有效性，仍须核对进程 birth 与 HTTP instance，并在发信号前复核 birth。停服结果用 `publish_status: null`、`data_error: "not_checked"` 明确表示未检查数据；`client status` 的历史完整性错误保持原样。
+
+### Compatibility and validation
+
+- Schema 1.0、公开业务方法和运行依赖保持不变。受影响的本地回归和合成包已验证；正式发行 ZIP 仍需独立验收。
+
 ## [0.3.10] - 2026-10-05
 
 ### Changed
@@ -215,7 +231,8 @@
 - 冻结验收集覆盖多人多币种、自驾、跨日航班、混合徒步、恢复重放和独立保留案例。
 - 公开包由开发仓库确定性生成；分发测试验证单一 `runtime/schemas/v1`、无 draft 目录和无 `trip.upgrade_schema` 调用面。
 
-[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.10...HEAD
+[Unreleased]: https://github.com/kyangc/travel-handbook-builder-skill/compare/v0.3.11...HEAD
+[0.3.11]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.11
 [0.3.10]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.10
 [0.3.9]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.9
 [0.3.8]: https://github.com/kyangc/travel-handbook-builder-skill/releases/tag/v0.3.8

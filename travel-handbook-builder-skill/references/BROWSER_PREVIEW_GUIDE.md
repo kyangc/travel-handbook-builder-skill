@@ -26,6 +26,8 @@ For an initialized managed `ROOT`, the separate lifecycle launcher keeps the pre
 
 `start` returns JSON only after verifying the loopback server identity and current canonical revision. Save its `url`; another `start` for the same ROOT reuses it, including after a managed commit. The private process record and log live in a 0700 sibling directory named `.travel-handbook-preview-*`, outside managed data and the release. `stop` signals only the recorded instance after checking its process birth and HTTP identity; an unverifiable record requires manual investigation and is never blindly killed. The existing foreground `preview-handbook` remains available for standalone canonical exports.
 
+`stop` does not validate managed data: its response has `publish_status: null` and `data_error: "not_checked"`. `status` or `client check` reports current data separately. If `start` times out, the error names the last readiness stage and HTTP probe result plus the private log path; inspect that log locally before retrying. These diagnostics do not establish the cause of an earlier timeout.
+
 ## Google Maps and the schematic fallback
 
 First run `preview-service maps-status ROOT`; it returns only `asked`, `configured` and `skipped`. If `asked=false`, ask the user once whether they want Google Maps. Record a decline or unanswered optional prompt with `preview-service maps-skip ROOT`. The same preview URL then shows the handbook's own point/line schematic without a basemap.

@@ -274,7 +274,7 @@ def api_probe(port: int) -> tuple[int, str | None, int | None] | None:
 
 def managed_status(root: Path) -> tuple[dict | None, str | None]:
     try:
-        status = ManagedHandbook.open(root).status()
+        status = ManagedHandbook.current_publication(root)
         if status["canonical_path"] != str(root / "private-handbook.json"):
             raise ServiceError("managed canonical path differs from selected ROOT")
         return status, None
@@ -282,14 +282,16 @@ def managed_status(root: Path) -> tuple[dict | None, str | None]:
         return None, f"{error.code}: {error}"
 
 
-def service_status(root: Path, control: Path, record: dict | None) -> dict:
-    managed, data_error = managed_status(root)
+def service_status(root: Path, control: Path, record: dict | None,
+                   *, check_data: bool = True) -> dict:
+    managed, data_error = managed_status(root) if check_data else (None, "not_checked")
     result = {"state": "stopped", "ready": False, "owned": False,
               "url": record["url"] if record else None,
               "pid": record["pid"] if record else None,
               "instance": record["instance"] if record else None,
               "export": str(root / "private-handbook.json"),
-              "revision": None, "publish_status": managed["publish_status"] if managed else None,
+              "revision": None, "canonical_revision": managed["canonical_revision"] if managed else None,
+              "publish_status": managed["publish_status"] if managed else None,
               "data_error": data_error, "control_dir": str(control)}
     if record is None:
         return result
@@ -311,7 +313,8 @@ def service_status(root: Path, control: Path, record: dict | None) -> dict:
         return result
     result["owned"] = True
     result["revision"] = probe[2]
-    result["runtime"] = runtime_probe(record["port"], record["instance"])
+    if check_data:
+        result["runtime"] = runtime_probe(record["port"], record["instance"])
     if (data_error is not None or managed["publish_status"] != "current"
             or probe[0] != 200 or probe[2] != managed["canonical_revision"]):
         result["state"] = "stale_data"
@@ -357,10 +360,9 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
             raise ServiceError("owned service is running but managed data is not ready")
         if current["state"] == "identity_mismatch":
             raise ServiceError("service identity mismatch; refusing takeover")
-    managed, data_error = managed_status(root)
-    if data_error is not None:
-        raise ServiceError(f"managed data is not ready: {data_error}")
-    if managed["publish_status"] != "current":
+    if current["data_error"] is not None:
+        raise ServiceError(f"managed data is not ready: {current['data_error']}")
+    if current["publish_status"] != "current":
         raise ServiceError("managed canonical is not currently published")
     export = root / "private-handbook.json"
     if export.is_symlink() or not export.is_file():
@@ -400,13 +402,15 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
         selected_port = None
         birth = None
         birth_seen = False
+        stage = "waiting_for_ready_line"
+        last_probe = "not_attempted"
         while time.monotonic() < deadline:
             if child.poll() is not None:
                 if "cannot bind loopback port" in log.read_text(encoding="utf-8"):
                     raise ServiceError(
-                        f"loopback port {port} is occupied; the previous URL cannot be preserved"
+                        f"loopback port {port} is occupied; the previous URL cannot be preserved; private log: {log}"
                     )
-                raise ServiceError("preview process exited before readiness; see private log")
+                raise ServiceError(f"preview process exited before readiness; private log: {log}")
             started = ready_line(log)
             if isinstance(started, dict):
                 match = re.fullmatch(r"http://127\.0\.0\.1:(\d+)/", str(started.get("url")))
@@ -415,14 +419,35 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
             birth = birth_identity(child.pid)
             birth_seen = birth_seen or birth is not None
             probe = api_probe(selected_port) if selected_port else None
+            if not selected_port:
+                stage = "waiting_for_ready_line"
+                last_probe = "not_attempted"
+            elif not birth:
+                stage = "waiting_for_process_birth"
+                last_probe = "no_http_response" if probe is None else f"http_{probe[0]}"
+            elif probe is None:
+                stage = "waiting_for_http_response"
+                last_probe = "no_http_response"
+            elif probe[1] != instance:
+                stage = "waiting_for_instance"
+                last_probe = f"http_{probe[0]},instance_mismatch"
+            elif probe[0] != 200:
+                stage = "waiting_for_http_200"
+                last_probe = f"http_{probe[0]},instance_match"
+            elif probe[2] != current["canonical_revision"]:
+                stage = "waiting_for_revision"
+                last_probe = "http_200,instance_match,revision_mismatch"
+            else:
+                stage = "ready"
+                last_probe = "http_200,instance_match,revision_match"
             if (birth and probe and probe[0] == 200 and probe[1] == instance
-                    and probe[2] == managed["canonical_revision"]):
+                    and probe[2] == current["canonical_revision"]):
                 break
             time.sleep(0.05)
         else:
             if not birth_seen:
-                raise ServiceError("process birth identity unavailable; lifecycle service unsupported")
-            raise ServiceError("preview did not become identity-verified and data-ready")
+                raise ServiceError(f"process birth identity unavailable; lifecycle service unsupported; stage={stage}; last_probe={last_probe}; private log: {log}")
+            raise ServiceError(f"preview did not become identity-verified and data-ready; stage={stage}; last_probe={last_probe}; private log: {log}")
         record = {"root": str(root), "export": str(export), "pid": child.pid,
                   "birth": birth, "instance": instance, "port": selected_port,
                   "url": f"http://127.0.0.1:{selected_port}/", "started_at": time.time(),
@@ -460,8 +485,8 @@ def start(root: Path, control: Path, record_path: Path, requested_port: int | No
 def stop(root: Path, control: Path, record_path: Path) -> dict:
     record = read_record(record_path)
     if record is None:
-        return service_status(root, control, None)
-    current = service_status(root, control, record)
+        return service_status(root, control, None, check_data=False)
+    current = service_status(root, control, record, check_data=False)
     if not current["owned"]:
         probe = api_probe(record["port"]) if current.get("stale_process") else None
         if probe is not None and probe[1] == record["instance"]:
@@ -481,7 +506,7 @@ def stop(root: Path, control: Path, record_path: Path) -> dict:
         probe = api_probe(record["port"])
         if probe is None or probe[1] != record["instance"]:
             record_path.unlink()
-            return service_status(root, control, None)
+            return service_status(root, control, None, check_data=False)
         time.sleep(0.05)
     raise ServiceError("service did not release its port after SIGTERM")
 
@@ -516,14 +541,16 @@ def main(argv: list[str] | None = None) -> int:
             checked_directory(control, create=True)
         elif not checked_directory(control, create=False):
             result = ({"asked": False, "configured": False, "skipped": False}
-                      if args.action == "maps-status" else service_status(root, control, None))
+                      if args.action == "maps-status" else service_status(
+                          root, control, None, check_data=args.action != "stop"))
             print(json.dumps(result, ensure_ascii=False))
             return 0
         if args.action not in ("start", "maps-skip", "maps-configure") and not (control / "lock").exists():
             if (control / "instance.json").exists():
                 raise ServiceError("service record exists without its control lock")
             result = ({"asked": False, "configured": False, "skipped": False}
-                      if args.action == "maps-status" else service_status(root, control, None))
+                      if args.action == "maps-status" else service_status(
+                          root, control, None, check_data=args.action != "stop"))
             print(json.dumps(result, ensure_ascii=False))
             return 0
         with locked_control(control, create=args.action in ("start", "maps-skip", "maps-configure")):

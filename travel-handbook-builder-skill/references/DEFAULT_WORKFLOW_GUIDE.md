@@ -59,7 +59,7 @@ CLI client init "/absolute/output/managed handbook" --state "/absolute/output/tr
 
 ## 在同一 ROOT 续改
 
-先用 `client read ROOT --type trip --limit 1` 取得当前 revision 和完整能力；随后按目标类型、handle 或 Day handle 局部读取，已取得能力时加 `--omit-capabilities`，分页时保持同一过滤器并追完 cursor。改 Place 时用 `client context ROOT --handle PLACE_HANDLE`（仅有名称时用 `--name NAME` 并核对候选），它同时返回关联说明与来源。只补一项有来源且不覆盖旧值的 Place 内容可读[managed 指南](CLIENT_GUIDE.md)使用 `prepare-place`。纠错、修改开放规则、调整安排和其他公开方法按匹配的专业指南构造原格式 request，用 `prepare-request`。更新复合字段前读回完整旧值并带回无关子字段；不要为改一个字段重建整份行程。来源适用期、例外和关键未知保持明确；公开计划不能冒充已出票或已预订。
+首次直接按本次目标类型或 handle 执行 `client read ROOT`，默认响应同时给出当前 revision 和完整能力；后续局部读取加 `--omit-capabilities`，分页时保持同一过滤器并追完 cursor。改 Place 时用 `client context ROOT --handle PLACE_HANDLE`（仅有名称时用 `--name NAME` 并核对候选），它同时返回关联说明与来源。只补一项有来源且不覆盖旧值的 Place 内容可读[managed 指南](CLIENT_GUIDE.md)使用 `prepare-place`。纠错、修改开放规则、调整安排和其他公开方法按匹配的专业指南构造原格式 request，用 `prepare-request`。更新复合字段前读回完整旧值并带回无关子字段；不要为改一个字段重建整份行程。来源适用期、例外和关键未知保持明确；公开计划不能冒充已出票或已预订。
 
 下面是请求形状示意，实际 revision、目标和内容须来自当前 read 与本次授权。`trip.update` 不需要 target；其他对象遵循各自公开方法合同。
 

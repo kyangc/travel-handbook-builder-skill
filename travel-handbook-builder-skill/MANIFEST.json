@@ -2,11 +2,11 @@
   "manifest_version": 1,
   "package": {
     "name": "travel-handbook-builder-skill",
-    "version": "0.3.10"
+    "version": "0.3.11"
   },
   "source": {
     "repository": "https://github.com/kyangc/travel-handbook-builder-skill",
-    "release_tag": "v0.3.10",
+    "release_tag": "v0.3.11",
     "distribution": "public-skill-release"
   },
   "requirements": {
@@ -81,8 +81,8 @@
     },
     {
       "path": "SKILL.md",
-      "size": 5188,
-      "sha256": "bf9318bc9c99a915a3a38464a170127952c0e4041370153a4815342037d1f43d",
+      "size": 5257,
+      "sha256": "d75afc41b9b6ac6841b0864012f70995aa3154ffa08c126ea7e9c549b4949305",
       "mode": "0644"
     },
     {
@@ -105,8 +105,8 @@
     },
     {
       "path": "references/BROWSER_PREVIEW_GUIDE.md",
-      "size": 7373,
-      "sha256": "87ff3fa0b0024ccfd74151e98c29957ce5d96f55943842d356d03a4c8b678d11",
+      "size": 7768,
+      "sha256": "9172af79a9f7b1b7409ff2d9c6b1b6fc20529c8edee3488260fa258cc0db80df",
       "mode": "0644"
     },
     {
@@ -117,8 +117,8 @@
     },
     {
       "path": "references/CLIENT_GUIDE.md",
-      "size": 14091,
-      "sha256": "121e0d4d9d4a367ba9d9deed08b9cbc1ddc6e4b6c1177d407cdd2673e4f3b843",
+      "size": 14080,
+      "sha256": "52f269bacfd95ecfe8bea3ba9ea379582967c83738e89a40062f25639312a4f2",
       "mode": "0644"
     },
     {
@@ -135,8 +135,8 @@
     },
     {
       "path": "references/DEFAULT_WORKFLOW_GUIDE.md",
-      "size": 6263,
-      "sha256": "001e97b87148ee6eb624cd70fc0c92c116526efa59a97009f01225cb9885102c",
+      "size": 6244,
+      "sha256": "9d35ff756bc4807d5a5c90bb508a10a7e3aa0041b5a6c7e72eb1e53d6929665a",
       "mode": "0644"
     },
     {
@@ -333,8 +333,8 @@
     },
     {
       "path": "runtime/authoring/client.py",
-      "size": 47921,
-      "sha256": "f7db9a0be528fdb381ce8a2689d8b35facc461381e668b3c152609e591a960b3",
+      "size": 48662,
+      "sha256": "441b7a6b73b250c3a9f3257513bbce2fcf1ff798adaf5b456bb506cfef0b3a74",
       "mode": "0644"
     },
     {
@@ -603,8 +603,8 @@
     },
     {
       "path": "scripts/preview_service.py",
-      "size": 25415,
-      "sha256": "ff4f4fa13a87ec7bb9eaa50860ca370640f6bc313e81e38396978741cd440f7f",
+      "size": 27020,
+      "sha256": "5491d8b00e87c2e3c44d61abd47fb0a9f524635351cec8ebbd48fadc8fea4931",
       "mode": "0755"
     },
     {

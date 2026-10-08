@@ -19,7 +19,7 @@
 在开发仓库为本次发行设置一次版本，并运行发布准备命令；它会构建公开 Skill、同步模板、刷新 manifest、校验 bundle 并生成最终确定性 ZIP：
 
 ```sh
-VERSION=0.3.10  # 替换为本次选定版本；后续命令沿用同一 shell
+VERSION=0.3.11  # 替换为本次选定版本；后续命令沿用同一 shell
 python3 scripts/prepare_public_release.py \
   --version "$VERSION" \
   --release-repo /absolute/path/to/travel-handbook-builder-skill

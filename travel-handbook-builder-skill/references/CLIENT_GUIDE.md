@@ -33,7 +33,7 @@ scripts/travel-handbook client check \
 
 `--day` 要 **Day handle**，不能直接传日期。已读取能力后，先 `client read ROOT --type day --limit 50 --omit-capabilities` 并追完分页，按返回的 `record.date` 选择其 `handle`，再执行 `client read ROOT --day DAY_HANDLE --omit-capabilities`。工具不把日期／名称猜成对象。`client context` 只服务 Place，参数是 `--handle PLACE_HANDLE` 或 `--name PLACE_NAME`，没有 `--target`；Task 等其他对象用 `client read ROOT --handle OBJECT_HANDLE --omit-capabilities`。错误仍为非零退出；错误中的 `recovery.argv` 可接在原 CLI 可执行入口后运行，返回帮助不等于已经正确选择对象。
 
-首次需要完整能力时执行 `client read ROOT --type trip --limit 1`（默认包含 capabilities）；后续局部读取使用 `--omit-capabilities`（Python：`include_capabilities=False`）。它只省略顶层 `capabilities`（含重复的 coordinate_inputs），其余对象、revision、关联 handles、import report、显式 Source 全文及分页逐值保留，不截断、不缩写。CLI 默认输出不变。每页按原过滤器和 `pagination.next_cursor` 读取；中途可切换是否省略能力，游标范围不变。`--report map-coverage` 本来不重复能力，加入此选项不会改变完整汇总或分页。stdout 始终为完整 JSON，可逐页重定向落盘；不要用输出长度代替是否追完分页。
+首次按本次目标类型或 handle 执行 `client read ROOT`（默认包含 capabilities）；后续局部读取使用 `--omit-capabilities`（Python：`include_capabilities=False`）。它只省略顶层 `capabilities`（含重复的 coordinate_inputs），其余对象、revision、关联 handles、import report、显式 Source 全文及分页逐值保留，不截断、不缩写。CLI 默认输出不变。每页按原过滤器和 `pagination.next_cursor` 读取；中途可切换是否省略能力，游标范围不变。`--report map-coverage` 本来不重复能力，加入此选项不会改变完整汇总或分页。stdout 始终为完整 JSON，可逐页重定向落盘；不要用输出长度代替是否追完分页。
 
 `client check ROOT`（Python：`ManagedHandbook.open(ROOT).check()`）只读返回 `state_revision`、`canonical_revision`、`publish_status` 和 `report`。`report` 是同一当前完整 state 的公开 `check(state)` 完整报告，包括 `availability_assessments`；没有选择、分页或自动发布。`publish_status=stale` 表示 canonical/网页仍落后，即使 `report.valid=true`，本命令仍以校验成功的退出码 0 返回；调用方须单独核对发布状态，不能把当前 state 的诊断说成旧网页已展示的内容。无效目录或内部 state/canonical 沿用结构化错误与非零退出。读取不会改动 state、canonical、report 或 journal；package-only 的当前导入 state 可诊断，但缺失的旧作者元数据不会恢复。
 

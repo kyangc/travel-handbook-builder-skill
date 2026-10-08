@@ -144,6 +144,8 @@ class ManagedHandbook:
     def _validated_state_and_canonical(self):
         state = read_json(self.root / STATE_NAME)
         canonical = read_json(self.root / CANONICAL_NAME)
+        if not isinstance(state, dict):
+            raise ClientError("CLIENT_STATE_INVALID", "Managed state is not an object")
         if state.get("workspace_id") != self._marker.get("workspace_id"):
             raise ClientError("CLIENT_WORKSPACE_MISMATCH",
                               "Managed state does not match the initialized workspace")
@@ -159,6 +161,19 @@ class ManagedHandbook:
             raise ClientError("CLIENT_CANONICAL_INVALID", "Managed canonical is not valid",
                               error=error.as_dict()) from error
         return state, canonical, validation
+
+    @classmethod
+    def current_publication(cls, root):
+        """Validate current managed data without reading operation history."""
+        initialized_root, marker = validate_layout(root)
+        book = cls(initialized_root, marker)
+        with locked(initialized_root):
+            state, canonical, _ = book._validated_state_and_canonical()
+            return {
+                "canonical_path": str(initialized_root / CANONICAL_NAME),
+                "canonical_revision": canonical["revision"],
+                "publish_status": _publish_status(state["revision"], canonical["revision"]),
+            }
 
     def status(self):
         with locked(self.root):
